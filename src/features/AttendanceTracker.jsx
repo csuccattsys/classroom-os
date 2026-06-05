@@ -134,8 +134,8 @@ export default function AttendanceTracker() {
         {/* Dynamic Command Dashboard Header */}
         <div className="p-6 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-slate-50/30">
           <div className="space-y-0.5">
-            <h2 className="text-base font-bold text-slate-900">Session List</h2>
-            <p className="text-xs text-slate-400">Review student network availability states sequentially.</p>
+            <h2 className="text-base font-bold text-slate-900">List of Sections</h2>
+            <p className="text-xs text-slate-400">List of Different Sections.</p>
           </div>
           
           <div className="flex items-center gap-2 bg-white border border-slate-200 shadow-sm px-3 py-1.5 rounded-xl max-w-fit">
