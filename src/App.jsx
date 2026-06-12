@@ -179,10 +179,10 @@ export default function App() {
       <div className="bg-slate-50 border border-slate-200/60 rounded-2xl p-4">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
-            <Zap className="h-3.5 w-3.5 text-amber-500" /> Command Quick Actions
+            <Zap className="h-3.5 w-3.5 text-amber-500" /> Quick Actions
           </h3>
           <span className="text-[10px] font-mono font-bold text-slate-500 bg-slate-200/50 px-2 py-0.5 rounded-md">
-            Terminal Clock: {systemTime}
+            Clock: {systemTime}
           </span>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
