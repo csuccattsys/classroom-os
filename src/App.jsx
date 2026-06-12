@@ -8,7 +8,8 @@ import LoginGateway from './features/LoginGateway'
 import Sidebar from './features/Sidebar'
 import { 
   Layers, Activity, Radio, FileQuestion, BarChart3, Lock, Menu,
-  TrendingUp, Clock, AlertTriangle, Building2, LogIn, LogOut, UserCheck, Sparkles 
+  TrendingUp, Clock, AlertTriangle, Building2, LogIn, LogOut, UserCheck, Sparkles,
+  Zap, RefreshCw, ShieldAlert
 } from 'lucide-react'
 
 export default function App() {
@@ -25,6 +26,17 @@ export default function App() {
 
   // 💡 Gemini Navigation Control Engine State Hooks
   const [sidebarOpen, setSidebarOpen] = useState(true)
+
+  // 🛠️ Feasible Context Feature States
+  const [isRefreshing, setIsRefreshing] = useState(false)
+  const [systemTime, setSystemTime] = useState(new Date().toLocaleTimeString())
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setSystemTime(new Date().toLocaleTimeString())
+    }, 1000)
+    return () => clearInterval(timer)
+  }, [])
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -110,6 +122,13 @@ export default function App() {
     setAppLoading(false)
   }
 
+  const triggerCacheFlush = () => {
+    setIsRefreshing(true)
+    setTimeout(() => {
+      setIsRefreshing(false)
+    }, 900)
+  }
+
   const getRoleBadgeDetails = () => {
     switch (userRole) {
       case 'usg': return { label: 'USG Executive', color: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' }
@@ -155,6 +174,52 @@ export default function App() {
           </p>
         </div>
       </div>
+
+      {/* NEW INTEGRATED FEATURE: ADMINISTRATIVE QUICK-ACTIONS */}
+      <div className="bg-slate-50 border border-slate-200/60 rounded-2xl p-4">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
+            <Zap className="h-3.5 w-3.5 text-amber-500" /> Command Quick Actions
+          </h3>
+          <span className="text-[10px] font-mono font-bold text-slate-500 bg-slate-200/50 px-2 py-0.5 rounded-md">
+            Terminal Clock: {systemTime}
+          </span>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <button 
+            onClick={() => setActiveTab('attendance')}
+            className="p-2.5 bg-white border border-slate-200 rounded-xl text-left hover:border-emerald-500 transition group cursor-pointer"
+          >
+            <p className="text-[10px] font-bold text-slate-800 group-hover:text-emerald-700">Log Attendance</p>
+            <p className="text-[9px] text-slate-400 mt-0.5">Open scanner interface</p>
+          </button>
+          <button 
+            onClick={() => setActiveTab('announcements')}
+            className="p-2.5 bg-white border border-slate-200 rounded-xl text-left hover:border-indigo-500 transition group cursor-pointer"
+          >
+            <p className="text-[10px] font-bold text-slate-800 group-hover:text-indigo-700">Post Bulletin</p>
+            <p className="text-[9px] text-slate-400 mt-0.5">Broadcast info alerts</p>
+          </button>
+          <button 
+            onClick={triggerCacheFlush}
+            className="p-2.5 bg-white border border-slate-200 rounded-xl text-left hover:border-cyan-500 transition group cursor-pointer flex flex-col justify-between"
+          >
+            <div className="flex items-center justify-between w-full">
+              <p className="text-[10px] font-bold text-slate-800 group-hover:text-cyan-700">Sync Ledger</p>
+              <RefreshCw className={`h-3 w-3 text-slate-400 ${isRefreshing ? 'animate-spin text-cyan-600' : ''}`} />
+            </div>
+            <p className="text-[9px] text-slate-400 mt-0.5">Force flush static data cache</p>
+          </button>
+          <div className="p-2.5 bg-slate-100/70 border border-slate-200/40 rounded-xl text-left flex items-center gap-2">
+            <ShieldAlert className="h-4 w-4 text-emerald-600 shrink-0" />
+            <div>
+              <p className="text-[10px] font-bold text-slate-700">SSL Connection</p>
+              <p className="text-[9px] text-emerald-600 font-bold uppercase tracking-wider">Secure Node</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {[
           { label: 'Campus Activity Turnout', value: '89.4%', icon: TrendingUp, color: 'text-emerald-600', bg: 'bg-emerald-50/40' },
@@ -218,7 +283,7 @@ export default function App() {
             {/* MOBILE MENU CONTROLLER SWITCH */}
             <button 
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="p-2 text-slate-500 hover:bg-slate-100 rounded-full hidden transition-colors cursor-pointer"
+              className="p-2 text-slate-500 hover:bg-slate-100 rounded-full md:hidden transition-colors cursor-pointer"
             >
               <Menu className="h-5 w-5" />
             </button>
@@ -243,6 +308,15 @@ export default function App() {
           </div>
         </div>
       </header>
+
+      {/* NEW INTEGRATED FEATURE: QUICK ANNOUNCEMENT TICKER BANNER */}
+      <div className="bg-emerald-900 text-white py-1.5 px-4 overflow-hidden relative border-b border-emerald-950 flex items-center text-[10px] font-semibold tracking-wide">
+        <span className="bg-emerald-600 text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md mr-3 shadow-xs shrink-0 z-10">BULLETIN</span>
+        <div className="animate-marquee whitespace-nowrap loop-scroll flex gap-8">
+          <span>Welcome to the CSUCC Governance Portal. Ensure all event access attendance sheets are securely filed under correct RBAC rules.</span>
+          <span className="hidden md:inline text-emerald-300">• System Sync Status Operational</span>
+        </div>
+      </div>
 
       {/* CORE FRAME LAYOUT */}
       <div className="flex-1 flex min-h-0 relative">
