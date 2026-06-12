@@ -114,7 +114,7 @@ export default function App() {
 
   const getRoleBadgeDetails = () => {
     switch (userRole) {
-      case 'usg': return { label: 'USG Supreme Executive', color: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' }
+      case 'usg': return { label: 'USG Executive', color: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' }
       case 'cba_lsg': return { label: 'CBA LSG Council', color: 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30' }
       case 'ceit_lsg': return { label: 'CEIT LSG Council', color: 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30' }
       case 'citte_lsg': return { label: 'CITTE LSG Council', color: 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30' }
@@ -151,7 +151,7 @@ export default function App() {
       <div className="bg-gradient-to-r from-emerald-950 via-slate-900 to-emerald-950 rounded-2xl p-6 text-white border border-emerald-900/30 shadow-xl relative overflow-hidden">
         <div className="space-y-1.5 relative z-10">
           <span className={`border text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-md ${getRoleBadgeDetails().color}`}>{getRoleBadgeDetails().label} Panel</span>
-          <h2 className="text-xl font-black tracking-tight pt-2">CSUCC Governance & Audit Portal</h2>
+          <h2 className="text-xl font-black tracking-tight pt-2">CSUCC Governance Portal</h2>
           <p className="text-xs text-slate-400 max-w-xl">
             Active Session Identity: <span className="text-slate-200 font-mono font-bold">{isPublicObserver ? 'Guest Student Node (Read-Only)' : session?.user?.email}</span>
           </p>
