@@ -356,7 +356,7 @@ export default function AttendanceTracker({ userRole }) {
               <tr className="bg-slate-50 border-b border-slate-100 text-[9px] font-black uppercase tracking-widest text-slate-400">
                 <th className="p-3">ID Reference</th>
                 <th className="p-3">Student Name</th>
-                <th className="p-3"Course</th>
+                <th className="p-3">Course</th>
                 <th className="p-3">Time In</th>
                 <th className="p-3">Status State</th>
                 <th className="p-3 text-right">Edit Action</th>
