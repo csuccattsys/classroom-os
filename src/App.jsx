@@ -25,7 +25,7 @@ export default function App() {
   const [authProcessing, setAuthProcessing] = useState(false)
 
   // 💡 Gemini Navigation Control Engine State Hooks
-  const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [sidebarOpen, setSidebarOpen] = useState(false) // Default to closed/icon-only view
 
   // 🛠️ Feasible Context Feature States
   const [isRefreshing, setIsRefreshing] = useState(false)
@@ -175,7 +175,7 @@ export default function App() {
         </div>
       </div>
 
-      {/* NEW INTEGRATED FEATURE: ADMINISTRATIVE QUICK-ACTIONS */}
+      {/* ADMINISTRATIVE QUICK-ACTIONS */}
       <div className="bg-slate-50 border border-slate-200/60 rounded-2xl p-4">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
@@ -280,10 +280,10 @@ export default function App() {
       <header className="bg-white border-b border-slate-200/80 px-4 md:px-6 py-4 sticky top-0 z-50 backdrop-blur-md bg-white/90">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
           <div className="flex items-center gap-2 md:gap-3">
-            {/* MOBILE MENU CONTROLLER SWITCH */}
+            {/* REMOVED md:hidden - HAMBURGER MENU BUTTON IS ALWAYS VISIBLE NOW */}
             <button 
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="p-2 text-slate-500 hover:bg-slate-100 rounded-full md:hidden transition-colors cursor-pointer"
+              className="p-2 text-slate-500 hover:bg-slate-100 rounded-full transition-colors cursor-pointer"
             >
               <Menu className="h-5 w-5" />
             </button>
@@ -309,7 +309,7 @@ export default function App() {
         </div>
       </header>
 
-      {/* NEW INTEGRATED FEATURE: QUICK ANNOUNCEMENT TICKER BANNER */}
+      {/* QUICK ANNOUNCEMENT TICKER BANNER */}
       <div className="bg-emerald-900 text-white py-1.5 px-4 overflow-hidden relative border-b border-emerald-950 flex items-center text-[10px] font-semibold tracking-wide">
         <span className="bg-emerald-600 text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md mr-3 shadow-xs shrink-0 z-10">BULLETIN</span>
         <div className="animate-marquee whitespace-nowrap loop-scroll flex gap-8">
