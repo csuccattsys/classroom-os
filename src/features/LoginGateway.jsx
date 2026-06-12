@@ -23,7 +23,7 @@ export default function LoginGateway({
           </div>
           <div>
             <h2 className="text-lg font-black tracking-tight uppercase text-slate-900">CSUCC USG Governance Portal</h2>
-            <p className="text-[10px] text-slate-400 font-bold tracking-widest uppercase mt-0.5"Please login to access the portal"</p>
+            <p className="text-[10px] text-slate-400 font-bold tracking-widest uppercase mt-0.5"Please login to access the portal.</p>
           </div>
         </div>
 
