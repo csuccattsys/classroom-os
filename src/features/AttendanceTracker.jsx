@@ -1,228 +1,274 @@
 import React, { useState, useEffect } from 'react'
-import { supabase } from '../supabaseClient'
-import { UserCheck, Users, UserX, Clock, Calendar, CheckCircle2, AlertCircle } from 'lucide-react'
+import { supabase } from '../supabaseClient' // Adjust the import path based on your file structure
+import { 
+  UserCheck, Search, Database, CheckCircle, 
+  RefreshCw, SlidersHorizontal, PlusCircle, ShieldAlert 
+} from 'lucide-react'
 
-export default function AttendanceTracker() {
-  const [students, setStudents] = useState([])
-  const [attendance, setAttendance] = useState({}) 
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0])
+export default function AttendanceTracker({ userRole }) {
+  const [studentDb, setStudentDb] = useState([])
+  const [searchTerm, setSearchTerm] = useState('')
+  const [inputStudentId, setInputStudentId] = useState('')
   const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
-  const [statusMessage, setStatusMessage] = useState({ type: '', text: '' })
+  const [trackerMessage, setTrackerMessage] = useState({ text: '', type: '' })
 
-  // Pull down roster and match any existing log signatures for the picked date
-  useEffect(() => {
-    async function loadAttendanceSystemData() {
+  // Determine RBAC isolation tier
+  const isCollegeLSG = ['cba_lsg', 'ceit_lsg', 'citte_lsg', 'cthm_lsg'].includes(userRole)
+  const [activeCollegeTab, setActiveCollegeTab] = useState(isCollegeLSG ? userRole : 'all')
+
+  const collegeMetadata = {
+    all: { label: 'All Campus Nodes', styles: 'border-slate-200 text-slate-700 bg-slate-100' },
+    ceit_lsg: { label: 'CEIT Department', styles: 'border-blue-200 text-blue-700 bg-blue-50/50' },
+    cba_lsg: { label: 'CBA Department', styles: 'border-purple-200 text-purple-700 bg-purple-50/50' },
+    citte_lsg: { label: 'CITTE Department', styles: 'border-orange-200 text-orange-700 bg-orange-50/50' },
+    cthm_lsg: { label: 'CTHM Department', styles: 'border-rose-200 text-rose-700 bg-rose-50/50' },
+  }
+
+  // Fetch student roster directly from Supabase
+  const fetchStudentDatabase = async () => {
+    try {
       setLoading(true)
-      setStatusMessage({ type: '', text: '' })
+      let query = supabase.from('students').select('*')
 
-      // 1. Fetch current student list from production PostgreSQL
-      const { data: studentData, error: studentError } = await supabase
-        .from('students')
-        .select('id, name, email')
-        .order('name', { ascending: true })
-
-      if (studentError) {
-        setStatusMessage({ type: 'error', text: `Roster error: ${studentError.message}` })
-        setLoading(false)
-        return
+      // Safety Guard: If user is an LSG Officer, force-restrict query to their college only
+      if (isCollegeLSG) {
+        query = query.eq('college', userRole)
       }
 
-      setStudents(studentData || [])
+      const { data, error } = await query.order('name', { ascending: true })
 
-      // 2. Fetch existing logs for the selected session date
-      const { data: attendanceData, error: attendanceError } = await supabase
-        .from('attendance')
-        .select('student_id, status')
-        .eq('date', date)
-
-      if (attendanceError) {
-        console.error('Error matching historical log files:', attendanceError.message)
-      }
-
-      // 3. Map statuses to layout state. Default unlogged entities to 'Present'
-      const activeStatusMap = {}
-      if (studentData) {
-        studentData.forEach(student => {
-          const matchingRow = attendanceData?.find(record => record.student_id === student.id)
-          activeStatusMap[student.id] = matchingRow ? matchingRow.status : 'Present'
-        })
-      }
-      
-      setAttendance(activeStatusMap)
+      if (error) throw error
+      setStudentDb(data || [])
+    } catch (err) {
+      console.error('Database fetch error:', err.message)
+      setTrackerMessage({ text: 'Failed to synchronize with live database.', type: 'error' })
+    } finally {
       setLoading(false)
     }
-
-    loadAttendanceSystemData()
-  }, [date])
-
-  const handleStatusToggle = (studentId, statusValue) => {
-    setAttendance(prev => ({
-      ...prev,
-      [studentId]: statusValue
-    }))
   }
 
-  const commitAttendanceLogToCloud = async () => {
-    setSaving(true)
-    setStatusMessage({ type: '', text: '' })
+  // Sync with data on component mount
+  useEffect(() => {
+    fetchStudentDatabase()
+  }, [userRole])
 
-    const batchPayload = students.map(student => ({
-      student_id: student.id,
-      date: date,
-      status: attendance[student.id]
-    }))
+  // Action Handler: Mutate state & log attendance in Supabase
+  const handleManualLog = async (e) => {
+    e.preventDefault()
+    const targetId = inputStudentId.trim()
+    if (!targetId) return
 
-    // Upsert acts as an elegant double-action router: Updates if matching row exists, inserts if new
-    const { error } = await supabase
-      .from('attendance')
-      .upsert(batchPayload, { onConflict: 'student_id,date' })
+    setTrackerMessage({ text: '', type: '' })
 
-    setSaving(false)
+    // Look up local copy to run validation guards before hitting DB
+    const student = studentDb.find(s => s.id === targetId)
 
-    if (error) {
-      setStatusMessage({ type: 'error', text: `Sync Interrupted: ${error.message}` })
-    } else {
-      setStatusMessage({ type: 'success', text: `Session state for ${date} committed cleanly!` })
-      // Clear alert after a few seconds
-      setTimeout(() => setStatusMessage({ type: '', text: '' }), 4000)
+    if (!student) {
+      // Fallback check: It might belong to another college if user is USG
+      if (isCollegeLSG) {
+        setTrackerMessage({ text: `Student ID ${targetId} not found or outside your department scope.`, type: 'error' })
+        return
+      }
+    }
+
+    // RBAC validation: Cross-department restriction check
+    if (isCollegeLSG && student && student.college !== userRole) {
+      setTrackerMessage({ text: 'Cross-department breach blocked. You lack clearance.', type: 'error' })
+      return
+    }
+
+    const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+
+    try {
+      // Update data directly on the Supabase Backend
+      const { data, error } = await supabase
+        .from('students')
+        .update({ status: 'Present', log_time: timestamp })
+        .eq('id', targetId)
+        .select()
+
+      if (error) throw error
+
+      if (data && data.length > 0) {
+        setTrackerMessage({ text: `Verified and logged present.`, type: 'success' })
+        setInputStudentId('')
+        // Re-sync local state view with new database updates
+        fetchStudentDatabase()
+      } else {
+        setTrackerMessage({ text: `ID ${targetId} does not exist in central record logs.`, type: 'error' })
+      }
+    } catch (err) {
+      console.error('Supabase write error:', err.message)
+      setTrackerMessage({ text: 'Failed to write record transaction to cloud.', type: 'error' })
     }
   }
 
-  // Telemetry Calculations for Data Insights Panel
-  const totals = students.length
-  const presents = Object.values(attendance).filter(val => val === 'Present').length
-  const absents = Object.values(attendance).filter(val => val === 'Absent').length
-  const tardies = Object.values(attendance).filter(val => val === 'Tardy').length
-
-  if (loading) return (
-    <div className="flex flex-col items-center justify-center min-h-[350px] space-y-4">
-      <div className="w-9 h-9 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
-      <p className="text-xs font-bold text-slate-400 uppercase tracking-widest animate-pulse">Syncing Cloud Ledger...</p>
-    </div>
-  )
+  // Client-side table search & tab filter rendering pipeline
+  const filteredStudents = studentDb.filter(student => {
+    const matchesSearch = (student.name?.toLowerCase().includes(searchTerm.toLowerCase()) || student.id?.includes(searchTerm))
+    const matchesCollege = activeCollegeTab === 'all' ? true : student.college === activeCollegeTab
+    return matchesSearch && matchesCollege
+  })
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto">
+    <div className="space-y-6 animate-fade-in">
       
-      {/* Upper Grid Overview Matrix */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {[
-          { label: 'Roster Capacity', value: totals, icon: Users, color: 'text-slate-900', bg: 'bg-white' },
-          { label: 'Present Logged', value: presents, icon: UserCheck, color: 'text-emerald-600', bg: 'bg-emerald-50/40' },
-          { label: 'Absent Shift', value: absents, icon: UserX, color: 'text-rose-600', bg: 'bg-rose-50/40' },
-          { label: 'Tardy Metrics', value: tardies, icon: Clock, color: 'text-amber-600', bg: 'bg-amber-50/40' },
-        ].map((card, idx) => {
-          const CardIcon = card.icon
-          return (
-            <div key={idx} className={`p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between ${card.bg}`}>
-              <div className="space-y-1">
-                <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">{card.label}</p>
-                <p className={`text-2xl font-black ${card.color}`}>{card.value}</p>
-              </div>
-              <div className={`p-2.5 rounded-xl bg-white shadow-sm border border-slate-100/50 ${card.color}`}>
-                <CardIcon className="h-5 w-5" />
-              </div>
-            </div>
-          )
-        })}
-      </div>
-
-      {/* Primary Configuration Shell Container */}
-      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-        
-        {/* Dynamic Command Dashboard Header */}
-        <div className="p-6 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-slate-50/30">
-          <div className="space-y-0.5">
-            <h2 className="text-base font-bold text-slate-900">List of Sections</h2>
-            <p className="text-xs text-slate-400">List of Different Sections.</p>
-          </div>
-          
-          <div className="flex items-center gap-2 bg-white border border-slate-200 shadow-sm px-3 py-1.5 rounded-xl max-w-fit">
-            <Calendar className="h-4 w-4 text-slate-400" />
-            <input 
-              type="date" 
-              value={date} 
-              onChange={(e) => setDate(e.target.value)}
-              className="text-xs font-bold text-slate-700 bg-transparent focus:outline-none cursor-pointer"
-            />
+      {/* SECTION 1: LOG CONTROLLER INTERFACE */}
+      <div className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-xs">
+        <div className="flex items-center gap-2 pb-3 border-b border-slate-100 mb-4">
+          <div className="p-1.5 bg-emerald-50 text-emerald-700 rounded-lg"><UserCheck className="h-4 w-4" /></div>
+          <div>
+            <h3 className="text-xs font-black uppercase tracking-tight text-slate-900">Event Attendance Console</h3>
+            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Live Supabase Input Node</p>
           </div>
         </div>
 
-        {/* Global Action Sync Feedback Banner */}
-        {statusMessage.text && (
-          <div className={`p-4 mx-6 mt-6 rounded-xl flex items-center gap-3 text-xs font-bold border ${
-            statusMessage.type === 'success' 
-              ? 'bg-emerald-50 border-emerald-100 text-emerald-700' 
-              : 'bg-rose-50 border-rose-100 text-rose-700'
+        <form onSubmit={handleManualLog} className="flex flex-col sm:flex-row gap-2 max-w-xl">
+          <input 
+            type="text" 
+            placeholder="Scan or Type Student ID (e.g., 2024-0001)..."
+            value={inputStudentId}
+            onChange={(e) => setInputStudentId(e.target.value)}
+            className="flex-1 px-3 py-2 text-xs border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:ring-1 focus:ring-emerald-500 focus:outline-hidden font-mono font-bold"
+          />
+          <button 
+            type="submit" 
+            className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black uppercase tracking-wider px-4 py-2 rounded-xl transition duration-200 flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+          >
+            <PlusCircle className="h-3.5 w-3.5" /> Commit Log Entry
+          </button>
+        </form>
+
+        {trackerMessage.text && (
+          <div className={`mt-3 p-2.5 rounded-xl text-[11px] font-semibold flex items-center gap-2 border ${
+            trackerMessage.type === 'success' 
+              ? 'bg-emerald-50 border-emerald-200 text-emerald-800' 
+              : 'bg-rose-50 border-rose-200 text-rose-800'
           }`}>
-            {statusMessage.type === 'success' ? <CheckCircle2 className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />}
-            {statusMessage.text}
+            {trackerMessage.type === 'success' ? <CheckCircle className="h-4 w-4 shrink-0" /> : <ShieldAlert className="h-4 w-4 shrink-0" />}
+            <span>{trackerMessage.text}</span>
           </div>
         )}
+      </div>
 
-        {/* Core Identity Mapping Engine Rows */}
-        {students.length === 0 ? (
-          <div className="p-16 text-center space-y-2">
-            <div className="text-2xl">📁</div>
-            <h4 className="text-sm font-bold text-slate-700">Database Table Roster Clear</h4>
-            <p className="text-xs text-slate-400 max-w-sm mx-auto">Your connection is active! To see students, add a few test profiles directly inside your Supabase Student table view.</p>
+      {/* SECTION 2: INTEGRATED DATABASE SHEET MANAGEMENT */}
+      <div className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-xs space-y-4">
+        
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+          <div className="flex items-center gap-2">
+            <div className="p-1.5 bg-slate-100 text-slate-700 rounded-lg"><Database className="h-4 w-4" /></div>
+            <div>
+              <h3 className="text-xs font-black uppercase tracking-tight text-slate-900">Student Database Records</h3>
+              <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">
+                Isolated Segment: {collegeMetadata[activeCollegeTab].label}
+              </p>
+            </div>
           </div>
-        ) : (
-          <>
-            <div className="divide-y divide-slate-100 max-h-[480px] overflow-y-auto px-1">
-              {students.map((student) => (
-                <div key={student.id} className="p-4 sm:px-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-slate-50/40 transition">
-                  
-                  {/* Student Basic Matrix ID Information */}
-                  <div className="flex items-center gap-3.5">
-                    <div className="h-9 w-9 rounded-xl bg-slate-900 text-white font-black text-xs tracking-wider flex items-center justify-center shadow-sm">
-                      {student.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
-                    </div>
-                    <div>
-                      <h4 className="text-xs font-black text-slate-800">{student.name}</h4>
-                      <p className="text-[11px] text-slate-400 font-medium">{student.email}</p>
-                    </div>
-                  </div>
 
-                  {/* Operational Segment Control Hub */}
-                  <div className="flex bg-slate-100 p-1 rounded-xl self-start sm:self-center border border-slate-200/20">
-                    {[
-                      { id: 'Present', activeClass: 'peer-checked:bg-emerald-500 peer-checked:text-white text-emerald-600 hover:bg-emerald-50' },
-                      { id: 'Absent', activeClass: 'peer-checked:bg-rose-500 peer-checked:text-white text-rose-600 hover:bg-rose-50' },
-                      { id: 'Tardy', activeClass: 'peer-checked:bg-amber-500 peer-checked:text-white text-amber-600 hover:bg-amber-50' }
-                    ].map((mode) => (
-                      <label key={mode.id} className="relative cursor-pointer">
-                        <input
-                          type="radio"
-                          name={`session-attendance-${student.id}`}
-                          checked={attendance[student.id] === mode.id}
-                          onChange={() => handleStatusToggle(student.id, mode.id)}
-                          className="sr-only peer"
-                        />
-                        <div className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all duration-200 ${mode.activeClass}`}>
-                          {mode.id}
-                        </div>
-                      </label>
-                    ))}
-                  </div>
-
-                </div>
-              ))}
+          <div className="flex gap-2 max-w-sm w-full">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-slate-400" />
+              <input 
+                type="text" 
+                placeholder="Filter by Student Name/ID..." 
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-9 pr-4 py-1.5 text-xs border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:ring-1 focus:ring-emerald-500 focus:outline-hidden font-medium"
+              />
             </div>
+            <button 
+              onClick={fetchStudentDatabase} 
+              className="p-1.5 border border-slate-200 rounded-xl bg-slate-50 text-slate-500 hover:bg-slate-100 cursor-pointer"
+              title="Refresh Data from Supabase"
+            >
+              <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin text-emerald-600' : ''}`} />
+            </button>
+          </div>
+        </div>
 
-            {/* Core Commit Navigation Footer Trigger */}
-            <div className="p-4 bg-slate-50/50 border-t border-slate-100 flex justify-end">
-              <button
-                onClick={commitAttendanceLogToCloud}
-                disabled={saving}
-                className="bg-slate-900 hover:bg-slate-800 active:scale-98 text-white text-xs font-black uppercase tracking-widest px-5 py-3 rounded-xl shadow-md transition duration-200 disabled:opacity-40"
-              >
-                {saving ? 'Transmitting Packet...' : 'Save Session State'}
-              </button>
-            </div>
-          </>
-        )}
+        {/* REPARTITION PILL TABS */}
+        <div className="space-y-1.5">
+          <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1">
+            <SlidersHorizontal className="h-3 w-3" /> Database Department Separation
+          </p>
+          <div className="flex flex-wrap gap-1">
+            {userRole === 'usg' || userRole === 'student' ? (
+              Object.keys(collegeMetadata).map((key) => (
+                <button
+                  key={key}
+                  onClick={() => setActiveCollegeTab(key)}
+                  className={`px-3 py-1.5 rounded-lg text-[10px] font-bold border transition-all cursor-pointer ${
+                    activeCollegeTab === key 
+                      ? 'bg-slate-900 text-white border-slate-900 shadow-xs' 
+                      : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                  }`}
+                >
+                  {key === 'all' ? 'All Records' : key.split('_')[0].toUpperCase()}
+                </button>
+              ))
+            ) : (
+              <div className={`px-3 py-1.5 rounded-lg text-[10px] font-bold border uppercase tracking-wider ${collegeMetadata[userRole].styles}`}>
+                Locked to {userRole.split('_')[0]} Council Workspace Scope
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* CORE DATATABLE GRID ELEMENT */}
+        <div className="border border-slate-100 rounded-xl overflow-hidden bg-slate-50/30">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-slate-50/80 border-b border-slate-100 text-[9px] font-black uppercase tracking-widest text-slate-400">
+                  <th className="p-3">ID Reference</th>
+                  <th className="p-3">Student Name</th>
+                  <th className="p-3">College Cluster</th>
+                  <th className="p-3">Specialization Track</th>
+                  <th className="p-3">Time Verified</th>
+                  <th className="p-3 text-right">Status State</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 text-xs font-semibold text-slate-700">
+                {loading ? (
+                  <tr>
+                    <td colSpan="6" className="p-8 text-center text-slate-400 font-mono text-[10px] uppercase tracking-widest animate-pulse">
+                      Pulling cloud directory state logs...
+                    </td>
+                  </tr>
+                ) : filteredStudents.length > 0 ? (
+                  filteredStudents.map((student) => (
+                    <tr key={student.id} className="hover:bg-white transition-colors">
+                      <td className="p-3 font-mono text-[10px] text-slate-500 font-bold">{student.id}</td>
+                      <td className="p-3 text-slate-900 font-bold">{student.name}</td>
+                      <td className="p-3">
+                        <span className="text-[9px] font-black px-2 py-0.5 rounded-sm uppercase tracking-wider bg-slate-100 border border-slate-200/60 text-slate-600">
+                          {student.college ? student.college.split('_')[0] : '—'}
+                        </span>
+                      </td>
+                      <td className="p-3 text-slate-500 text-[11px]">{student.program}</td>
+                      <td className="p-3 text-slate-400 font-mono text-[10px]">{student.log_time || '—'}</td>
+                      <td className="p-3 text-right">
+                        <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md ${
+                          student.status === 'Present' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
+                          student.status === 'Absent' ? 'bg-rose-50 text-rose-700 border border-rose-200' : 
+                          'bg-amber-50 text-amber-700 border border-amber-200'
+                        }`}>
+                          {student.status || 'Absent'}
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="6" className="p-8 text-center text-slate-400 font-medium text-[11px]">
+                      No recorded sync items matched this database scope filter.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
 
       </div>
     </div>
