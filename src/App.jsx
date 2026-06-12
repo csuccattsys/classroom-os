@@ -179,8 +179,8 @@ export default function App() {
   )
 
   const menuItems = [
-    { id: 'dashboard', label: 'Operations Dashboard', icon: Layers },
-    { id: 'attendance', label: 'Activity Attendance Log', icon: Activity },
+    { id: 'dashboard', label: 'Dashboard', icon: Layers },
+    { id: 'attendance', label: 'Activity Attendance', icon: Activity },
     { id: 'announcements', label: 'Official Bulletin Board', icon: Radio },
     { id: 'quizzes', label: 'Voter Polling Suite', icon: FileQuestion, locked: true },
     { id: 'records', label: 'Legislative Audit Ledger', icon: BarChart3, locked: true },
