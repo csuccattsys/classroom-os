@@ -1,49 +1,98 @@
 import React from 'react'
-import { Lock } from 'lucide-react'
+import { Lock, Menu, ChevronLeft } from 'lucide-react'
 
-export default function Sidebar({ menuItems, activeTab, setActiveTab, userRole }) {
+export default function Sidebar({ 
+  menuItems, 
+  activeTab, 
+  setActiveTab, 
+  userRole, 
+  sidebarOpen, 
+  setSidebarOpen 
+}) {
   return (
-    <aside className="w-full md:w-64 bg-white md:border-r border-b border-slate-100 p-4 md:py-6 space-y-6">
-      <div>
-        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-3">
-          System Framework Nodes
-        </p>
-        <nav className="mt-3 flex md:flex-col gap-1 overflow-x-auto md:overflow-visible pb-2 md:pb-0">
-          {menuItems.map((item) => {
-            const IconComponent = item.icon
-            const isTabRestricted = (item.id === 'attendance' && (userRole === 'student' || userRole === 'ssg'))
-            
-            return (
-              <button
-                key={item.id}
-                disabled={item.locked}
-                onClick={() => setActiveTab(item.id)}
-                className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold tracking-wide transition-all w-full text-left shrink-0 md:shrink-1 ${
-                  item.locked ? 'opacity-30 cursor-not-allowed' :
-                  activeTab === item.id 
-                    ? 'bg-gradient-to-r from-emerald-600 to-slate-900 text-white shadow-md' 
-                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <IconComponent className={`h-4 w-4 ${activeTab === item.id ? 'text-white' : 'text-slate-400'}`} />
-                  <span className={isTabRestricted ? 'text-slate-400 line-through decoration-rose-500/50' : ''}>
-                    {item.label}
-                  </span>
-                </div>
-                
-                {item.locked ? (
-                  <span className="text-[9px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded uppercase font-black tracking-wider">
-                    Hold
-                  </span>
-                ) : isTabRestricted ? (
-                  <Lock className="h-3 w-3 text-rose-500" />
-                ) : null}
-              </button>
-            )
-          })}
-        </nav>
-      </div>
-    </aside>
+    <>
+      {/* MOBILE FLOATING BACKDROP OVERLAY */}
+      {sidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-40 md:hidden transition-opacity duration-300"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      {/* GEMINI-INSPIRED COMPONENT TRACK */}
+      <aside 
+        className={`
+          fixed md:sticky top-[77px] left-0 h-[calc(100vh-77px)] z-50 md:z-30
+          bg-slate-50 border-r border-slate-200/60 p-3 flex flex-col justify-between
+          transition-all duration-300 ease-in-out
+          ${sidebarOpen ? 'w-64 translate-x-0' : 'w-0 -translate-x-full md:w-18 md:translate-x-0'}
+        `}
+      >
+        <div className="space-y-4 overflow-hidden">
+          {/* DESKTOP INTEGRATED EXPAND/COLLAPSE CONTROLLER */}
+          <div className="hidden md:flex items-center px-2 h-10">
+            <button 
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="p-2 text-slate-500 hover:bg-slate-200/60 rounded-full transition-colors cursor-pointer"
+              title={sidebarOpen ? "Collapse menu" : "Expand menu"}
+            >
+              <Menu className="h-5 w-5" />
+            </button>
+          </div>
+
+          {/* FRAMEWORK NAVIGATION NODE LINKS */}
+          <nav className="space-y-1">
+            {menuItems.map((item) => {
+              const IconComponent = item.icon
+              const isTabRestricted = (item.id === 'attendance' && (userRole === 'student' || userRole === 'ssg'))
+              const isSelected = activeTab === item.id
+              
+              return (
+                <button
+                  key={item.id}
+                  disabled={item.locked}
+                  onClick={() => {
+                    setActiveTab(item.id)
+                    // Auto-collapse drawer frame when a item is clicked on phone devices
+                    if (window.innerWidth < 768) setSidebarOpen(false)
+                  }}
+                  className={`
+                    flex items-center rounded-full text-xs font-semibold tracking-wide 
+                    transition-all duration-200 w-full text-left p-3 cursor-pointer
+                    ${item.locked ? 'opacity-30 cursor-not-allowed' : ''}
+                    ${isSelected 
+                      ? 'bg-emerald-50 text-emerald-800 font-bold' 
+                      : 'text-slate-600 hover:bg-slate-200/50 hover:text-slate-900'
+                    }
+                  `}
+                  title={item.label}
+                >
+                  <div className="flex items-center gap-4 min-w-[200px]">
+                    <IconComponent className={`h-5 w-5 shrink-0 ${isSelected ? 'text-emerald-700' : 'text-slate-500'}`} />
+                    <span className={`
+                      transition-opacity duration-200
+                      ${sidebarOpen ? 'opacity-100' : 'md:opacity-0 pointer-events-none'}
+                      ${isTabRestricted ? 'text-slate-400 line-through decoration-rose-500/40' : ''}
+                    `}>
+                      {item.label}
+                    </span>
+                  </div>
+
+                  {sidebarOpen && (
+                    <div className="ml-auto shrink-0">
+                      {item.locked ? (
+                        <span className="text-[8px] bg-slate-200/70 text-slate-600 px-1.5 py-0.5 rounded-sm uppercase font-black tracking-wider">Hold</span>
+                      ) : isTabRestricted ? (
+                        <Lock className="h-3 w-3 text-rose-500" />
+                      ) : null}
+                    </div>
+                  )}
+                </button>
+              )
+            })}
+          </nav>
+        </div>
+      </aside>
+    </>
   )
 }
