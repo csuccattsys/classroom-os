@@ -48,7 +48,7 @@ export default function LoginGateway({
           </div>
 
           <div>
-            <label className="block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1"Password</label>
+            <label className="block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1">Password</label>
             <input 
               type="password"
               required
