@@ -220,7 +220,7 @@ export default function AttendanceTracker({ userRole }) {
       <div className="space-y-6 animate-fade-in">
         <div className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-xs">
           <h3 className="text-xs font-black uppercase tracking-tight text-slate-900 mb-3 flex items-center gap-1.5">
-            <PlusCircle className="h-4 w-4 text-emerald-600" /> Initialize New Activity Track
+            <PlusCircle className="h-4 w-4 text-emerald-600" /> New Activity Track
           </h3>
           <form onSubmit={handleCreateEvent} className="flex flex-col sm:flex-row gap-2 max-w-xl">
             <input 
@@ -241,9 +241,9 @@ export default function AttendanceTracker({ userRole }) {
           <div className="flex justify-between items-center pb-3 border-b border-slate-100 mb-4">
             <div>
               <h3 className="text-xs font-black uppercase tracking-tight text-slate-900 flex items-center gap-2">
-                <Calendar className="h-4 w-4 text-slate-500" /> Active Campus Activity Index
+                <Calendar className="h-4 w-4 text-slate-500" /> Active Campus Activity
               </h3>
-              <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Select an activity to proceed to active logs</p>
+              <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Select an activity to proceed to attendance logs</p>
             </div>
             <button onClick={fetchEvents} className="p-1.5 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer">
               <RefreshCw className={`h-3.5 w-3.5 text-slate-400 ${loading ? 'animate-spin text-emerald-600' : ''}`} />
@@ -295,7 +295,7 @@ export default function AttendanceTracker({ userRole }) {
             <ArrowLeft className="h-4 w-4" />
           </button>
           <div>
-            <span className="text-[8px] font-black tracking-widest text-emerald-400 uppercase bg-emerald-950 px-2 py-0.5 rounded border border-emerald-900/40">Active Tracker</span>
+            <span className="text-[8px] font-black tracking-widest text-emerald-400 uppercase bg-emerald-950 px-2 py-0.5 rounded border border-emerald-900/40">Attendance Tracker</span>
             <h2 className="text-sm font-black tracking-tight uppercase mt-0.5">{selectedEvent.title}</h2>
           </div>
         </div>
@@ -320,7 +320,7 @@ export default function AttendanceTracker({ userRole }) {
             className="flex-1 px-3 py-2 text-xs border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:ring-1 focus:ring-emerald-500 focus:outline-hidden font-mono font-bold"
           />
           <button type="submit" className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black uppercase tracking-wider px-5 py-2 rounded-xl flex items-center justify-center gap-1.5 cursor-pointer">
-            Verify & Log Node
+            Log Attendance
           </button>
         </form>
 
@@ -339,7 +339,7 @@ export default function AttendanceTracker({ userRole }) {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
           <div className="flex items-center gap-2">
             <ClipboardList className="h-4 w-4 text-slate-400" />
-            <h3 className="text-xs font-black uppercase tracking-tight text-slate-900">Student Roster Sheet Logs</h3>
+            <h3 className="text-xs font-black uppercase tracking-tight text-slate-900">Student Sheet Logs</h3>
           </div>
           <input 
             type="text" 
@@ -356,15 +356,15 @@ export default function AttendanceTracker({ userRole }) {
               <tr className="bg-slate-50 border-b border-slate-100 text-[9px] font-black uppercase tracking-widest text-slate-400">
                 <th className="p-3">ID Reference</th>
                 <th className="p-3">Student Name</th>
-                <th className="p-3">Track Specialty</th>
-                <th className="p-3">Time Capture</th>
+                <th className="p-3"Course</th>
+                <th className="p-3">Time In</th>
                 <th className="p-3">Status State</th>
-                <th className="p-3 text-right">Actions Override</th>
+                <th className="p-3 text-right">Edit Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-xs font-semibold text-slate-700">
               {loading ? (
-                <tr><td colSpan="6" className="p-6 text-center animate-pulse text-[10px] uppercase font-mono tracking-widest text-slate-400">Querying live node arrays...</td></tr>
+                <tr><td colSpan="6" className="p-6 text-center animate-pulse text-[10px] uppercase font-mono tracking-widest text-slate-400">Querying live arrays...</td></tr>
               ) : filteredStudents.length > 0 ? (
                 filteredStudents.map(student => {
                   const logRecord = attendanceLogs[student.id]
@@ -425,7 +425,7 @@ export default function AttendanceTracker({ userRole }) {
                             }}
                             className="p-1 text-slate-400 hover:text-slate-800 hover:bg-slate-100 rounded-md transition inline-flex items-center gap-1 cursor-pointer font-bold text-[10px]"
                           >
-                            <Edit2 className="h-3.5 w-3.5" /> Override
+                            <Edit2 className="h-3.5 w-3.5" /> Edit
                           </button>
                         )}
                       </td>
