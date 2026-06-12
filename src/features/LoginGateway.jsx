@@ -22,8 +22,8 @@ export default function LoginGateway({
             <img src={usgLogo} alt="CSUCC USG Seal" className="h-full w-full object-contain" />
           </div>
           <div>
-            <h2 className="text-lg font-black tracking-tight uppercase text-slate-900">CSUCC Governance Portal</h2>
-            <p className="text-[10px] text-slate-400 font-bold tracking-widest uppercase mt-0.5">Verified Supabase Secure Gateway</p>
+            <h2 className="text-lg font-black tracking-tight uppercase text-slate-900">CSUCC USG Governance Portal</h2>
+            <p className="text-[10px] text-slate-400 font-bold tracking-widest uppercase mt-0.5"Please login to access the portal."</p>
           </div>
         </div>
 
@@ -48,7 +48,7 @@ export default function LoginGateway({
           </div>
 
           <div>
-            <label className="block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1">Clearance Access Key</label>
+            <label className="block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1"Password</label>
             <input 
               type="password"
               required
