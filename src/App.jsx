@@ -1,4 +1,7 @@
 import React, { useState } from 'react'
+// Core Institutional Logo Asset Injection
+import usgLogo from './FB_IMG_1781228236447.jpg'
+
 import AttendanceTracker from './features/AttendanceTracker'
 import Announcements from './features/Announcements'
 import { 
@@ -166,14 +169,14 @@ export default function App() {
           
           {/* Official Branding Logo Integration */}
           <div className="flex items-center gap-3">
-            {/* Fallback container targeting the local/uploaded asset image matching FB_IMG_1781228236447.jpg */}
+            {/* Native Vite Module Importer targeting src/FB_IMG_1781228236447.jpg */}
             <div className="h-11 w-11 rounded-lg bg-slate-50 p-0.5 border border-slate-100 flex items-center justify-center overflow-hidden shadow-sm">
               <img 
-                src="/FB_IMG_1781228236447.jpg" 
+                src={usgLogo} 
                 alt="CSUCC USG Seal Logo" 
                 className="h-full w-full object-contain"
                 onError={(e) => {
-                  // Fallback design icon if path is unaligned during first build step
+                  // Shield emoji fallback protection in case of asset misplacement
                   e.target.style.display = 'none';
                   e.target.parentNode.innerHTML = '🛡️';
                 }}
