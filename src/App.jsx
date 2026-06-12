@@ -31,6 +31,32 @@ export default function App() {
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [systemTime, setSystemTime] = useState(new Date().toLocaleTimeString())
 
+  // --- NATIVE URL ROUTING SYNC ENGINE ---
+  useEffect(() => {
+    // Read URL hash on load and match tabs
+    const handleUrlRouting = () => {
+      const hash = window.location.hash.replace('#', '')
+      const validTabs = ['dashboard', 'attendance', 'announcements', 'quizzes', 'records']
+      if (validTabs.includes(hash)) {
+        setActiveTab(hash)
+      } else {
+        window.location.hash = activeTab // fallback to current valid tab if address is empty
+      }
+    }
+
+    // Run on startup and listen for user browser forward/backward navigation clicks
+    handleUrlRouting()
+    window.addEventListener('hashchange', handleUrlRouting)
+    return () => window.removeEventListener('hashchange', handleUrlRouting)
+  }, [])
+
+  // Sync back to URL hash bar whenever state switches programmatically
+  useEffect(() => {
+    if (window.location.hash !== `#${activeTab}`) {
+      window.location.hash = activeTab
+    }
+  }, [activeTab])
+
   useEffect(() => {
     const timer = setInterval(() => {
       setSystemTime(new Date().toLocaleTimeString())
@@ -280,7 +306,6 @@ export default function App() {
       <header className="bg-white border-b border-slate-200/80 px-4 md:px-6 py-4 sticky top-0 z-50 backdrop-blur-md bg-white/90">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
           <div className="flex items-center gap-2 md:gap-3">
-            {/* REMOVED md:hidden - HAMBURGER MENU BUTTON IS ALWAYS VISIBLE NOW */}
             <button 
               onClick={() => setSidebarOpen(!sidebarOpen)}
               className="p-2 text-slate-500 hover:bg-slate-100 rounded-full transition-colors cursor-pointer"
