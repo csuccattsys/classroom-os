@@ -7,7 +7,7 @@ import Announcements from './features/Announcements'
 import LoginGateway from './features/LoginGateway'
 import Sidebar from './features/Sidebar'
 import { 
-  Layers, Activity, Radio, FileQuestion, BarChart3, Lock, Eye,
+  Layers, Activity, Radio, FileQuestion, BarChart3, Lock, Menu,
   TrendingUp, Clock, AlertTriangle, Building2, LogIn, LogOut, UserCheck, Sparkles 
 } from 'lucide-react'
 
@@ -22,6 +22,9 @@ export default function App() {
   const [password, setPassword] = useState('')
   const [loginError, setLoginError] = useState('')
   const [authProcessing, setAuthProcessing] = useState(false)
+
+  // 💡 Gemini Navigation Control Engine State Hooks
+  const [sidebarOpen, setSidebarOpen] = useState(true)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -133,7 +136,7 @@ export default function App() {
   }
 
   const renderAccessDenied = (message) => (
-    <div className="bg-white rounded-2xl border border-rose-100 p-8 text-center max-w-md mx-auto my-12 shadow-sm">
+    <div className="bg-white rounded-2xl border border-rose-100 p-8 text-center max-w-md mx-auto my-12 shadow-xs">
       <div className="h-12 w-12 bg-rose-50 text-rose-600 rounded-full flex items-center justify-center mx-auto mb-4 border border-rose-100"><Lock className="h-5 w-5" /></div>
       <h3 className="text-xs font-black uppercase text-slate-900 tracking-tight">Clearance Check Failed</h3>
       <p className="text-xs text-slate-500 mt-2 leading-relaxed">{message}</p>
@@ -160,7 +163,7 @@ export default function App() {
         ].map((stat, idx) => {
           const StatIcon = stat.icon
           return (
-            <div key={idx} className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
+            <div key={idx} className="bg-white p-5 rounded-2xl border border-slate-100 shadow-xs flex items-center justify-between">
               <div className="space-y-1">
                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{stat.label}</p>
                 <p className="text-xl font-black text-slate-900">{stat.value}</p>
@@ -207,40 +210,56 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50/50 flex flex-col font-sans antialiased text-slate-900 selection:bg-emerald-600 selection:text-white">
-      <header className="bg-white border-b border-slate-100 px-6 py-4 sticky top-0 z-50 backdrop-blur-md bg-white/80">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="h-11 w-11 rounded-lg bg-slate-50 p-0.5 border border-slate-100 flex items-center justify-center overflow-hidden shadow-sm">
+    <div className="min-h-screen bg-white flex flex-col font-sans antialiased text-slate-900 selection:bg-emerald-600 selection:text-white">
+      {/* GLOBAL HEADER INFRASTRUCTURE */}
+      <header className="bg-white border-b border-slate-200/80 px-4 md:px-6 py-4 sticky top-0 z-50 backdrop-blur-md bg-white/90">
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
+          <div className="flex items-center gap-2 md:gap-3">
+            {/* MOBILE MENU CONTROLLER SWITCH */}
+            <button 
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="p-2 text-slate-500 hover:bg-slate-100 rounded-full md:hidden transition-colors cursor-pointer"
+            >
+              <Menu className="h-5 w-5" />
+            </button>
+
+            <div className="h-10 w-10 rounded-lg bg-slate-50 p-0.5 border border-slate-100 flex items-center justify-center overflow-hidden shadow-xs">
               <img src={usgLogo} alt="CSUCC USG Seal" className="h-full w-full object-contain" />
             </div>
             <div>
-              <h1 className="text-sm font-black tracking-tight uppercase text-slate-900 leading-none">CSUCC USG</h1>
-              <p className="text-[9px] text-slate-400 font-bold tracking-widest uppercase mt-1">Caraga State University Cabadbaran Campus</p>
+              <h1 className="text-xs md:text-sm font-black tracking-tight uppercase text-slate-900 leading-none">CSUCC USG</h1>
+              <p className="text-[8px] md:text-[9px] text-slate-400 font-bold tracking-widest uppercase mt-1 hidden sm:block">Caraga State University Cabadbaran Campus</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-3 bg-slate-50 p-1.5 pr-3 rounded-xl self-start sm:self-center border border-slate-200/50">
-            <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border border-slate-100 shadow-xs">
+          <div className="flex items-center gap-2 md:gap-3 bg-slate-50 p-1 rounded-xl border border-slate-200/50">
+            <div className="flex items-center gap-1.5 bg-white px-2.5 py-1.5 rounded-lg border border-slate-100 shadow-xs">
               <UserCheck className="h-3.5 w-3.5 text-emerald-600" />
-              <span className="text-[10px] font-black uppercase text-slate-700 tracking-wider">{getRoleBadgeDetails().label}</span>
+              <span className="text-[9px] md:text-[10px] font-black uppercase text-slate-700 tracking-wider">{getRoleBadgeDetails().label}</span>
             </div>
-            <button onClick={handleLogout} className="text-slate-400 hover:text-rose-600 text-[10px] font-black uppercase tracking-wider transition-colors flex items-center gap-1 pl-1">
-              <LogOut className="h-3 w-3" /> Exit Terminal
+            <button onClick={handleLogout} className="text-slate-400 hover:text-rose-600 text-[9px] md:text-[10px] font-black uppercase tracking-wider transition-colors flex items-center gap-1 pr-2 pl-1 cursor-pointer">
+              <LogOut className="h-3 w-3" /> <span className="hidden xs:inline">Exit Terminal</span>
             </button>
           </div>
         </div>
       </header>
 
-      <div className="flex-1 max-w-7xl w-full mx-auto flex flex-col md:flex-row min-h-0">
+      {/* CORE FRAME LAYOUT */}
+      <div className="flex-1 flex min-h-0 relative">
         <Sidebar 
           menuItems={menuItems} 
           activeTab={activeTab} 
           setActiveTab={setActiveTab} 
           userRole={userRole} 
+          sidebarOpen={sidebarOpen}
+          setSidebarOpen={setSidebarOpen}
         />
         
-        <main className="flex-1 p-4 md:p-8 min-w-0 overflow-y-auto">{renderContent()}</main>
+        <main className="flex-1 p-4 md:p-8 min-w-0 overflow-y-auto bg-white">
+          <div className="max-w-5xl mx-auto">
+            {renderContent()}
+          </div>
+        </main>
       </div>
     </div>
   )
