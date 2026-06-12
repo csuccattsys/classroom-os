@@ -1,5 +1,5 @@
 import React from 'react'
-import { Lock, Menu } from 'lucide-react'
+import { Lock } from 'lucide-react'
 
 export default function Sidebar({ 
   menuItems, 
@@ -29,17 +29,6 @@ export default function Sidebar({
         `}
       >
         <div className="space-y-4 overflow-hidden">
-          {/* DESKTOP INTEGRATED EXPAND/COLLAPSE CONTROLLER */}
-          <div className="hidden md:flex items-center px-2 h-10">
-            <button 
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="p-2 text-slate-500 hover:bg-slate-200/60 rounded-full transition-colors cursor-pointer"
-              title={sidebarOpen ? "Collapse menu" : "Expand menu"}
-            >
-              <Menu className="h-5 w-5" />
-            </button>
-          </div>
-
           {/* FRAMEWORK NAVIGATION NODE LINKS */}
           <nav className="space-y-1">
             {menuItems.map((item) => {
@@ -66,7 +55,6 @@ export default function Sidebar({
                   `}
                   title={item.label}
                 >
-                  {/* Keep icons perfectly aligned in the 20px rail track when collapsed */}
                   <div className="flex items-center gap-4 w-full">
                     <IconComponent className={`h-5 w-5 shrink-0 ${isSelected ? 'text-emerald-700' : 'text-slate-500'}`} />
                     
