@@ -1,5 +1,5 @@
 import React from 'react'
-import { Lock, Menu, ChevronLeft } from 'lucide-react'
+import { Lock, Menu } from 'lucide-react'
 
 export default function Sidebar({ 
   menuItems, 
@@ -24,8 +24,8 @@ export default function Sidebar({
         className={`
           fixed md:sticky top-[77px] left-0 h-[calc(100vh-77px)] z-50 md:z-30
           bg-slate-50 border-r border-slate-200/60 p-3 flex flex-col justify-between
-          transition-all duration-300 ease-in-out
-          ${sidebarOpen ? 'w-64 translate-x-0' : 'w-0 -translate-x-full md:w-18 md:translate-x-0'}
+          transition-all duration-300 ease-in-out shrink-0
+          ${sidebarOpen ? 'w-64 translate-x-0' : 'w-20 translate-x-0 md:w-20'} 
         `}
       >
         <div className="space-y-4 overflow-hidden">
@@ -53,7 +53,6 @@ export default function Sidebar({
                   disabled={item.locked}
                   onClick={() => {
                     setActiveTab(item.id)
-                    // Auto-collapse drawer frame when a item is clicked on phone devices
                     if (window.innerWidth < 768) setSidebarOpen(false)
                   }}
                   className={`
@@ -71,7 +70,7 @@ export default function Sidebar({
                     <IconComponent className={`h-5 w-5 shrink-0 ${isSelected ? 'text-emerald-700' : 'text-slate-500'}`} />
                     <span className={`
                       transition-opacity duration-200
-                      ${sidebarOpen ? 'opacity-100' : 'md:opacity-0 pointer-events-none'}
+                      ${sidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none w-0 hidden'}
                       ${isTabRestricted ? 'text-slate-400 line-through decoration-rose-500/40' : ''}
                     `}>
                       {item.label}
