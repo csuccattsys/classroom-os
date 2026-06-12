@@ -25,7 +25,7 @@ export default function Sidebar({
           fixed md:sticky top-[77px] left-0 h-[calc(100vh-77px)] z-50 md:z-30
           bg-slate-50 border-r border-slate-200/60 p-3 flex flex-col justify-between
           transition-all duration-300 ease-in-out shrink-0
-          ${sidebarOpen ? 'w-64 translate-x-0' : 'w-20 translate-x-0 md:w-20'} 
+          ${sidebarOpen ? 'w-64 translate-x-0' : 'w-20 translate-x-0'} 
         `}
       >
         <div className="space-y-4 overflow-hidden">
@@ -66,15 +66,18 @@ export default function Sidebar({
                   `}
                   title={item.label}
                 >
-                  <div className="flex items-center gap-4 min-w-[200px]">
+                  {/* Keep icons perfectly aligned in the 20px rail track when collapsed */}
+                  <div className="flex items-center gap-4 w-full">
                     <IconComponent className={`h-5 w-5 shrink-0 ${isSelected ? 'text-emerald-700' : 'text-slate-500'}`} />
-                    <span className={`
-                      transition-opacity duration-200
-                      ${sidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none w-0 hidden'}
-                      ${isTabRestricted ? 'text-slate-400 line-through decoration-rose-500/40' : ''}
-                    `}>
-                      {item.label}
-                    </span>
+                    
+                    {sidebarOpen && (
+                      <span className={`
+                        transition-all duration-200 whitespace-nowrap truncate
+                        ${isTabRestricted ? 'text-slate-400 line-through decoration-rose-500/40' : ''}
+                      `}>
+                        {item.label}
+                      </span>
+                    )}
                   </div>
 
                   {sidebarOpen && (
