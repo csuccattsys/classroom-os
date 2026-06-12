@@ -1,275 +1,314 @@
 import React, { useState, useEffect } from 'react'
-import { supabase } from '../supabaseClient' // Adjust the import path based on your file structure
+import { supabase } from '../supabaseClient'
 import { 
-  UserCheck, Search, Database, CheckCircle, 
-  RefreshCw, SlidersHorizontal, PlusCircle, ShieldAlert 
+  UserCheck, Search, Database, CheckCircle, RefreshCw, 
+  PlusCircle, ShieldAlert, Calendar, ArrowLeft, ClipboardList, Users 
 } from 'lucide-react'
 
 export default function AttendanceTracker({ userRole }) {
+  // State for Flow Control
+  const [selectedEvent, setSelectedEvent] = useState(null) // Holds current active event object
+  const [eventsList, setEventsList] = useState([])
   const [studentDb, setStudentDb] = useState([])
-  const [searchTerm, setSearchTerm] = useState('')
+  const [attendanceLogs, setAttendanceLogs] = useState({}) // Format: { student_id: log_time }
+
+  // Form & Interaction States
+  const [newEventTitle, setNewEventTitle] = useState('')
   const [inputStudentId, setInputStudentId] = useState('')
+  const [searchTerm, setSearchTerm] = useState('')
   const [loading, setLoading] = useState(true)
   const [trackerMessage, setTrackerMessage] = useState({ text: '', type: '' })
 
-  // Determine RBAC isolation tier
   const isCollegeLSG = ['cba_lsg', 'ceit_lsg', 'citte_lsg', 'cthm_lsg'].includes(userRole)
-  const [activeCollegeTab, setActiveCollegeTab] = useState(isCollegeLSG ? userRole : 'all')
 
-  const collegeMetadata = {
-    all: { label: 'All Campus Nodes', styles: 'border-slate-200 text-slate-700 bg-slate-100' },
-    ceit_lsg: { label: 'CEIT Department', styles: 'border-blue-200 text-blue-700 bg-blue-50/50' },
-    cba_lsg: { label: 'CBA Department', styles: 'border-purple-200 text-purple-700 bg-purple-50/50' },
-    citte_lsg: { label: 'CITTE Department', styles: 'border-orange-200 text-orange-700 bg-orange-50/50' },
-    cthm_lsg: { label: 'CTHM Department', styles: 'border-rose-200 text-rose-700 bg-rose-50/50' },
-  }
+  // --- DATABASE SYNC FLOWS ---
 
-  // Fetch student roster directly from Supabase
-  const fetchStudentDatabase = async () => {
+  // Fetch all events clearable by the active role
+  const fetchEvents = async () => {
     try {
       setLoading(true)
-      let query = supabase.from('students').select('*')
-
-      // Safety Guard: If user is an LSG Officer, force-restrict query to their college only
+      let query = supabase.from('events').select('*')
       if (isCollegeLSG) {
         query = query.eq('college', userRole)
       }
-
-      const { data, error } = await query.order('name', { ascending: true })
-
+      const { data, error } = await query.order('created_at', { ascending: false })
       if (error) throw error
-      setStudentDb(data || [])
+      setEventsList(data || [])
     } catch (err) {
-      console.error('Database fetch error:', err.message)
-      setTrackerMessage({ text: 'Failed to synchronize with live database.', type: 'error' })
+      console.error(err.message)
     } finally {
       setLoading(false)
     }
   }
 
-  // Sync with data on component mount
-  useEffect(() => {
-    fetchStudentDatabase()
-  }, [userRole])
+  // Fetch student roster and active event logs
+  const fetchAttendanceSheetData = async (eventId) => {
+    try {
+      setLoading(true)
+      // 1. Get student profiles
+      let studentQuery = supabase.from('students').select('*')
+      if (isCollegeLSG) {
+        studentQuery = studentQuery.eq('college', userRole)
+      }
+      const { data: students, error: studentErr } = await studentQuery.order('name', { ascending: true })
+      if (studentErr) throw studentErr
+      setStudentDb(students || [])
 
-  // Action Handler: Mutate state & log attendance in Supabase
+      // 2. Get active attendance logs for this event
+      const { data: logs, error: logsErr } = await supabase
+        .from('attendance_logs')
+        .select('student_id, log_time')
+        .eq('event_id', eventId)
+      if (logsErr) throw logsErr
+
+      // Map array to object for O(1) status lookups on front-end
+      const logsMap = {}
+      logs?.forEach(l => { logsMap[l.student_id] = l.log_time })
+      setAttendanceLogs(logsMap)
+
+    } catch (err) {
+      console.error(err.message)
+      setTrackerMessage({ text: 'Error syncing attendance records.', type: 'error' })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    if (!selectedEvent) {
+      fetchEvents()
+    } else {
+      fetchAttendanceSheetData(selectedEvent.id)
+    }
+    setTrackerMessage({ text: '', type: '' })
+  }, [selectedEvent, userRole])
+
+  // --- ACTIONS ---
+
+  const handleCreateEvent = async (e) => {
+    e.preventDefault()
+    if (!newEventTitle.trim()) return
+
+    try {
+      const { data, error } = await supabase
+        .from('events')
+        .insert([{ title: newEventTitle.trim(), college: userRole }])
+        .select()
+      if (error) throw error
+
+      setNewEventTitle('')
+      setTrackerMessage({ text: 'Event deployed to core campus framework successfully.', type: 'success' })
+      fetchEvents()
+    } catch (err) {
+      setTrackerMessage({ text: 'Failed to initialize event database entry.', type: 'error' })
+    }
+  }
+
   const handleManualLog = async (e) => {
     e.preventDefault()
     const targetId = inputStudentId.trim()
-    if (!targetId) return
+    if (!targetId || !selectedEvent) return
 
     setTrackerMessage({ text: '', type: '' })
-
-    // Look up local copy to run validation guards before hitting DB
     const student = studentDb.find(s => s.id === targetId)
 
     if (!student) {
-      // Fallback check: It might belong to another college if user is USG
-      if (isCollegeLSG) {
-        setTrackerMessage({ text: `Student ID ${targetId} not found or outside your department scope.`, type: 'error' })
-        return
-      }
-    }
-
-    // RBAC validation: Cross-department restriction check
-    if (isCollegeLSG && student && student.college !== userRole) {
-      setTrackerMessage({ text: 'Cross-department breach blocked. You lack clearance.', type: 'error' })
+      setTrackerMessage({ text: `Student ID ${targetId} not registered or out of department scope.`, type: 'error' })
       return
     }
 
     const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 
     try {
-      // Update data directly on the Supabase Backend
-      const { data, error } = await supabase
-        .from('students')
-        .update({ status: 'Present', log_time: timestamp })
-        .eq('id', targetId)
-        .select()
+      const { error } = await supabase
+        .from('attendance_logs')
+        .insert([{ event_id: selectedEvent.id, student_id: targetId, log_time: timestamp }])
 
-      if (error) throw error
-
-      if (data && data.length > 0) {
-        setTrackerMessage({ text: `Verified and logged present.`, type: 'success' })
-        setInputStudentId('')
-        // Re-sync local state view with new database updates
-        fetchStudentDatabase()
-      } else {
-        setTrackerMessage({ text: `ID ${targetId} does not exist in central record logs.`, type: 'error' })
+      if (error) {
+        if (error.code === '23505') { // Postgres code for duplicate unique key
+          setTrackerMessage({ text: `${student.name} is already checked into this event.`, type: 'error' })
+        } else {
+          throw error
+        }
+        return
       }
+
+      setTrackerMessage({ text: `${student.name} checked in successfully.`, type: 'success' })
+      setInputStudentId('')
+      fetchAttendanceSheetData(selectedEvent.id)
     } catch (err) {
-      console.error('Supabase write error:', err.message)
-      setTrackerMessage({ text: 'Failed to write record transaction to cloud.', type: 'error' })
+      setTrackerMessage({ text: 'Failed to lock transaction on cloud ledger.', type: 'error' })
     }
   }
 
-  // Client-side table search & tab filter rendering pipeline
-  const filteredStudents = studentDb.filter(student => {
-    const matchesSearch = (student.name?.toLowerCase().includes(searchTerm.toLowerCase()) || student.id?.includes(searchTerm))
-    const matchesCollege = activeCollegeTab === 'all' ? true : student.college === activeCollegeTab
-    return matchesSearch && matchesCollege
-  })
+  const filteredStudents = studentDb.filter(student => 
+    student.name?.toLowerCase().includes(searchTerm.toLowerCase()) || student.id?.includes(searchTerm)
+  )
 
-  return (
-    <div className="space-y-6 animate-fade-in">
-      
-      {/* SECTION 1: LOG CONTROLLER INTERFACE */}
-      <div className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-xs">
-        <div className="flex items-center gap-2 pb-3 border-b border-slate-100 mb-4">
-          <div className="p-1.5 bg-emerald-50 text-emerald-700 rounded-lg"><UserCheck className="h-4 w-4" /></div>
-          <div>
-            <h3 className="text-xs font-black uppercase tracking-tight text-slate-900">Event Attendance Console</h3>
-            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Live Supabase Input Node</p>
-          </div>
+  // --- VIEWS ---
+
+  // SCREEN A: EVENT CHOICE SELECTION TRACK
+  if (!selectedEvent) {
+    return (
+      <div className="space-y-6 animate-fade-in">
+        <div className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-xs">
+          <h3 className="text-xs font-black uppercase tracking-tight text-slate-900 mb-3 flex items-center gap-1.5">
+            <PlusCircle className="h-4 w-4 text-emerald-600" /> Initialize New Activity Track
+          </h3>
+          <form onSubmit={handleCreateEvent} className="flex flex-col sm:flex-row gap-2 max-w-xl">
+            <input 
+              type="text" 
+              placeholder="Enter Activity Title (e.g., General Assembly 2026)..."
+              value={newEventTitle}
+              onChange={(e) => setNewEventTitle(e.target.value)}
+              className="flex-1 px-3 py-2 text-xs border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:ring-1 focus:ring-emerald-500 focus:outline-hidden font-semibold"
+            />
+            <button type="submit" className="bg-slate-900 hover:bg-slate-800 text-white text-xs font-black uppercase tracking-wider px-4 py-2 rounded-xl cursor-pointer">
+              Deploy Event
+            </button>
+          </form>
+          {trackerMessage.text && <p className="text-[11px] font-bold text-emerald-600 mt-2">{trackerMessage.text}</p>}
         </div>
 
+        <div className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-xs">
+          <div className="flex justify-between items-center pb-3 border-b border-slate-100 mb-4">
+            <div>
+              <h3 className="text-xs font-black uppercase tracking-tight text-slate-900 flex items-center gap-2">
+                <Calendar className="h-4 w-4 text-slate-500" /> Active Campus Activity Index
+              </h3>
+              <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Select an activity to proceed to active logs</p>
+            </div>
+            <button onClick={fetchEvents} className="p-1.5 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer">
+              <RefreshCw className={`h-3.5 w-3.5 text-slate-400 ${loading ? 'animate-spin text-emerald-600' : ''}`} />
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {eventsList.length > 0 ? (
+              eventsList.map(event => (
+                <div 
+                  key={event.id}
+                  onClick={() => setSelectedEvent(event)}
+                  className="p-4 bg-slate-50 hover:bg-emerald-50/50 border border-slate-200/60 rounded-xl transition cursor-pointer group flex items-start justify-between"
+                >
+                  <div className="space-y-1">
+                    <p className="text-xs font-black text-slate-900 group-hover:text-emerald-900 transition">{event.title}</p>
+                    <p className="text-[9px] font-mono font-bold text-slate-400 uppercase">Deployed: {event.event_date}</p>
+                  </div>
+                  <span className="text-[8px] font-black bg-slate-200 text-slate-600 px-2 py-0.5 rounded-sm uppercase tracking-wider">
+                    {event.college.split('_')[0]}
+                  </span>
+                </div>
+              ))
+            ) : (
+              <p className="text-xs font-semibold text-slate-400 p-4 col-span-2 text-center">No active deployed events found for this scope terminal.</p>
+            )}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // SCREEN B: SEPARATED ATTENDANCE SCAN SHEET PORTAL
+  return (
+    <div className="space-y-6 animate-fade-in">
+      {/* HEADER CONTROLLER BRIDGE */}
+      <div className="flex items-center justify-between bg-slate-900 text-white p-4 rounded-2xl shadow-md">
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={() => setSelectedEvent(null)}
+            className="p-2 hover:bg-white/10 rounded-full transition cursor-pointer"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </button>
+          <div>
+            <span className="text-[8px] font-black tracking-widest text-emerald-400 uppercase bg-emerald-950 px-2 py-0.5 rounded border border-emerald-900/40">Active Tracker</span>
+            <h2 className="text-sm font-black tracking-tight uppercase mt-0.5">{selectedEvent.title}</h2>
+          </div>
+        </div>
+        <p className="text-[9px] font-mono font-bold text-slate-400 uppercase hidden sm:block">Scope Domain: {selectedEvent.college.split('_')[0]}</p>
+      </div>
+
+      {/* MANUAL SCAN CONTROLLER LOG ENTRY */}
+      <div className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-xs">
         <form onSubmit={handleManualLog} className="flex flex-col sm:flex-row gap-2 max-w-xl">
           <input 
             type="text" 
-            placeholder="Scan or Type Student ID (e.g., 2024-0001)..."
+            placeholder="Scan ID or Enter Reference Key..."
             value={inputStudentId}
             onChange={(e) => setInputStudentId(e.target.value)}
             className="flex-1 px-3 py-2 text-xs border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:ring-1 focus:ring-emerald-500 focus:outline-hidden font-mono font-bold"
           />
-          <button 
-            type="submit" 
-            className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black uppercase tracking-wider px-4 py-2 rounded-xl transition duration-200 flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
-          >
-            <PlusCircle className="h-3.5 w-3.5" /> Commit Log Entry
+          <button type="submit" className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black uppercase tracking-wider px-5 py-2 rounded-xl flex items-center justify-center gap-1.5 cursor-pointer">
+            Verify & Log Node
           </button>
         </form>
 
         {trackerMessage.text && (
           <div className={`mt-3 p-2.5 rounded-xl text-[11px] font-semibold flex items-center gap-2 border ${
-            trackerMessage.type === 'success' 
-              ? 'bg-emerald-50 border-emerald-200 text-emerald-800' 
-              : 'bg-rose-50 border-rose-200 text-rose-800'
+            trackerMessage.type === 'success' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-rose-50 border-rose-200 text-rose-800'
           }`}>
-            {trackerMessage.type === 'success' ? <CheckCircle className="h-4 w-4 shrink-0" /> : <ShieldAlert className="h-4 w-4 shrink-0" />}
+            {trackerMessage.type === 'success' ? <CheckCircle className="h-4 w-4" /> : <ShieldAlert className="h-4 w-4" />}
             <span>{trackerMessage.text}</span>
           </div>
         )}
       </div>
 
-      {/* SECTION 2: INTEGRATED DATABASE SHEET MANAGEMENT */}
+      {/* CORE STUDENT LOG RENDER SHEET */}
       <div className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-xs space-y-4">
-        
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
           <div className="flex items-center gap-2">
-            <div className="p-1.5 bg-slate-100 text-slate-700 rounded-lg"><Database className="h-4 w-4" /></div>
-            <div>
-              <h3 className="text-xs font-black uppercase tracking-tight text-slate-900">Student Database Records</h3>
-              <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">
-                Isolated Segment: {collegeMetadata[activeCollegeTab].label}
-              </p>
-            </div>
+            <ClipboardList className="h-4 w-4 text-slate-400" />
+            <h3 className="text-xs font-black uppercase tracking-tight text-slate-900">Assigned Student Roster Verification Sheet</h3>
           </div>
-
-          <div className="flex gap-2 max-w-sm w-full">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-slate-400" />
-              <input 
-                type="text" 
-                placeholder="Filter by Student Name/ID..." 
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-9 pr-4 py-1.5 text-xs border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:ring-1 focus:ring-emerald-500 focus:outline-hidden font-medium"
-              />
-            </div>
-            <button 
-              onClick={fetchStudentDatabase} 
-              className="p-1.5 border border-slate-200 rounded-xl bg-slate-50 text-slate-500 hover:bg-slate-100 cursor-pointer"
-              title="Refresh Data from Supabase"
-            >
-              <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin text-emerald-600' : ''}`} />
-            </button>
-          </div>
+          <input 
+            type="text" 
+            placeholder="Filter database list..." 
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="max-w-xs w-full px-3 py-1.5 text-xs border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:outline-hidden font-medium"
+          />
         </div>
 
-        {/* REPARTITION PILL TABS */}
-        <div className="space-y-1.5">
-          <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1">
-            <SlidersHorizontal className="h-3 w-3" /> Database Department Separation
-          </p>
-          <div className="flex flex-wrap gap-1">
-            {userRole === 'usg' || userRole === 'student' ? (
-              Object.keys(collegeMetadata).map((key) => (
-                <button
-                  key={key}
-                  onClick={() => setActiveCollegeTab(key)}
-                  className={`px-3 py-1.5 rounded-lg text-[10px] font-bold border transition-all cursor-pointer ${
-                    activeCollegeTab === key 
-                      ? 'bg-slate-900 text-white border-slate-900 shadow-xs' 
-                      : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
-                  }`}
-                >
-                  {key === 'all' ? 'All Records' : key.split('_')[0].toUpperCase()}
-                </button>
-              ))
-            ) : (
-              <div className={`px-3 py-1.5 rounded-lg text-[10px] font-bold border uppercase tracking-wider ${collegeMetadata[userRole].styles}`}>
-                Locked to {userRole.split('_')[0]} Council Workspace Scope
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* CORE DATATABLE GRID ELEMENT */}
         <div className="border border-slate-100 rounded-xl overflow-hidden bg-slate-50/30">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-slate-50/80 border-b border-slate-100 text-[9px] font-black uppercase tracking-widest text-slate-400">
-                  <th className="p-3">ID Reference</th>
-                  <th className="p-3">Student Name</th>
-                  <th className="p-3">College Cluster</th>
-                  <th className="p-3">Specialization Track</th>
-                  <th className="p-3">Time Verified</th>
-                  <th className="p-3 text-right">Status State</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 text-xs font-semibold text-slate-700">
-                {loading ? (
-                  <tr>
-                    <td colSpan="6" className="p-8 text-center text-slate-400 font-mono text-[10px] uppercase tracking-widest animate-pulse">
-                      Pulling cloud directory state logs...
-                    </td>
-                  </tr>
-                ) : filteredStudents.length > 0 ? (
-                  filteredStudents.map((student) => (
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-slate-50 border-b border-slate-100 text-[9px] font-black uppercase tracking-widest text-slate-400">
+                <th className="p-3">ID Reference</th>
+                <th className="p-3">Student Name</th>
+                <th className="p-3">Track Specialty</th>
+                <th className="p-3">Time Capture</th>
+                <th className="p-3 text-right">Status Flag</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 text-xs font-semibold text-slate-700">
+              {loading ? (
+                <tr><td colSpan="5" className="p-6 text-center animate-pulse text-[10px] uppercase font-mono tracking-widest text-slate-400">Querying live node arrays...</td></tr>
+              ) : filteredStudents.length > 0 ? (
+                filteredStudents.map(student => {
+                  const loggedTime = attendanceLogs[student.id]
+                  return (
                     <tr key={student.id} className="hover:bg-white transition-colors">
-                      <td className="p-3 font-mono text-[10px] text-slate-500 font-bold">{student.id}</td>
+                      <td className="p-3 font-mono text-[10px] font-bold text-slate-400">{student.id}</td>
                       <td className="p-3 text-slate-900 font-bold">{student.name}</td>
-                      <td className="p-3">
-                        <span className="text-[9px] font-black px-2 py-0.5 rounded-sm uppercase tracking-wider bg-slate-100 border border-slate-200/60 text-slate-600">
-                          {student.college ? student.college.split('_')[0] : '—'}
-                        </span>
-                      </td>
-                      <td className="p-3 text-slate-500 text-[11px]">{student.program}</td>
-                      <td className="p-3 text-slate-400 font-mono text-[10px]">{student.log_time || '—'}</td>
+                      <td className="p-3 text-[11px] text-slate-500">{student.program}</td>
+                      <td className="p-3 font-mono text-[10px] text-slate-400">{loggedTime || '—'}</td>
                       <td className="p-3 text-right">
                         <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md ${
-                          student.status === 'Present' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
-                          student.status === 'Absent' ? 'bg-rose-50 text-rose-700 border border-rose-200' : 
-                          'bg-amber-50 text-amber-700 border border-amber-200'
+                          loggedTime ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200'
                         }`}>
-                          {student.status || 'Absent'}
+                          {loggedTime ? 'Present' : 'Absent'}
                         </span>
                       </td>
                     </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan="6" className="p-8 text-center text-slate-400 font-medium text-[11px]">
-                      No recorded sync items matched this database scope filter.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+                  )
+                })
+              ) : (
+                <tr><td colSpan="5" className="p-6 text-center text-slate-400 text-[11px]">No structural entries matched the filter parameters.</td></tr>
+              )}
+            </tbody>
+          </table>
         </div>
-
       </div>
     </div>
   )
