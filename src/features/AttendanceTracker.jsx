@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { supabase } from '../supabaseClient'
 import { 
   UserCheck, Search, Database, CheckCircle, RefreshCw, 
   PlusCircle, ShieldAlert, Calendar, ArrowLeft, ClipboardList, 
-  Download, Edit2, Trash2, Check, X 
+  Download, Edit2, Trash2, Check, X, Users, UserX, UserCheck2, HelpCircle
 } from 'lucide-react'
 
 export default function AttendanceTracker({ userRole }) {
@@ -11,7 +11,7 @@ export default function AttendanceTracker({ userRole }) {
   const [selectedEvent, setSelectedEvent] = useState(null)
   const [eventsList, setEventsList] = useState([])
   const [studentDb, setStudentDb] = useState([])
-  const [attendanceLogs, setAttendanceLogs] = useState({}) // Format: { student_id: { log_id, log_time } }
+  const [attendanceLogs, setAttendanceLogs] = useState({}) // Format: { student_id: { log_id, log_time, status } }
 
   // Interactive UI Elements
   const [newEventTitle, setNewEventTitle] = useState('')
@@ -25,6 +25,7 @@ export default function AttendanceTracker({ userRole }) {
   const [editStatusValue, setEditStatusValue] = useState('Present')
 
   const isCollegeLSG = ['cba_lsg', 'ceit_lsg', 'citte_lsg', 'cthm_lsg'].includes(userRole)
+  const inputRef = useRef(null)
 
   // --- DATABASE DATA-SYNC FLOWS ---
   const fetchEvents = async () => {
@@ -71,23 +72,33 @@ export default function AttendanceTracker({ userRole }) {
   }
 
   useEffect(() => {
-    if (!selectedEvent) fetchEvents()
-    else fetchAttendanceSheetData(selectedEvent.id)
+    if (!selectedEvent) {
+      fetchEvents()
+    } else {
+      fetchAttendanceSheetData(selectedEvent.id)
+      // Keep structural input target focused for seamless external scanning hardware integration
+      setTimeout(() => inputRef.current?.focus(), 100)
+    }
     setTrackerMessage({ text: '', type: '' })
   }, [selectedEvent, userRole])
+
+  // --- COMPUTE STATISTICS METRICS ---
+  const totalRosterCount = studentDb.length
+  const presentCount = Object.values(attendanceLogs).filter(l => l.status === 'Present').length
+  const excusedCount = Object.values(attendanceLogs).filter(l => l.status === 'Excused').length
+  const absentCount = totalRosterCount - presentCount - excusedCount
+  const attendanceRate = totalRosterCount > 0 ? Math.round((presentCount / totalRosterCount) * 100) : 0
 
   // --- EXPORT TO SPREADSHEET ENGINE ---
   const handleExportToCSV = () => {
     if (!selectedEvent || studentDb.length === 0) return
 
-    // Define Spreadsheet Columns Headers
     const headers = ['Student ID', 'Full Legal Name', 'College Cluster', 'Program Specialty', 'Verification Timestamp', 'Attendance Status']
     
-    // Map Student Roster to matching spreadsheet data arrays
     const rows = studentDb.map(student => {
       const logRecord = attendanceLogs[student.id]
       return [
-        `"${student.id}"`, // Quote strings to prevent format breaking in Excel
+        `"${student.id}"`, 
         `"${student.name}"`,
         `"${student.college ? student.college.split('_')[0].toUpperCase() : '—'}"`,
         `"${student.program}"`,
@@ -96,70 +107,66 @@ export default function AttendanceTracker({ userRole }) {
       ]
     })
 
-    // Construct raw string schema structure
     const csvContent = "data:text/csv;charset=utf-8," 
       + [headers.join(','), ...rows.map(e => e.join(','))].join('\n')
 
-    // Programmatic simulation of clean file download trigger
     const encodedUri = encodeURI(csvContent)
     const link = document.createElement("a")
     link.setAttribute("href", encodedUri)
     
-    // Format File Name cleanly using custom activity details
-    const cleanFileName = `${selectedEvent.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_attendance.csv`
+    const cleanFileName = `${selectedEvent.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_attendance_report.csv`
     link.setAttribute("download", cleanFileName)
     document.body.appendChild(link)
     
-    link.click() // Dispatch download action trigger
+    link.click()
     document.body.removeChild(link)
   }
 
   // --- EDIT & OVERRIDE ACTIONS ---
   const handleSaveEditedStatus = async (studentId) => {
     const logRecord = attendanceLogs[studentId]
-    const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    const currentTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 
     try {
       if (editStatusValue === 'Absent') {
-        // If switched back to Absent, remove log record completely from attendance logs table
         if (logRecord) {
-          await supabase.from('attendance_logs').delete().eq('id', logRecord.log_id)
+          const { error } = await supabase.from('attendance_logs').delete().eq('id', logRecord.log_id)
+          if (error) throw error
         }
       } else {
         if (logRecord) {
-          // If record exists, update row values
-          await supabase.from('attendance_logs')
+          const { error } = await supabase.from('attendance_logs')
             .update({ status: editStatusValue })
             .eq('id', logRecord.log_id)
+          if (error) throw error
         } else {
-          // If overriding an Absent student to Present directly inside table row, create entry row
-          await supabase.from('attendance_logs')
-            .insert([{ event_id: selectedEvent.id, student_id: studentId, status: editStatusValue, log_time: timestamp }])
+          const { error } = await supabase.from('attendance_logs')
+            .insert([{ event_id: selectedEvent.id, student_id: studentId, status: editStatusValue, log_time: currentTime }])
+          if (error) throw error
         }
       }
-      setTrackerMessage({ text: 'Roster status state overrides successfully synchronized.', type: 'success' })
+      setTrackerMessage({ text: 'Roster validation record overridden successfully.', type: 'success' })
       setEditingStudentId(null)
       fetchAttendanceSheetData(selectedEvent.id)
     } catch (err) {
-      setTrackerMessage({ text: 'Failed to synchronize override metadata state changes.', type: 'error' })
+      setTrackerMessage({ text: 'Failed to modify record overrides on remote ledger.', type: 'error' })
     }
   }
 
   const handleDeleteEvent = async (eventId, e) => {
-    e.stopPropagation() // Stop component from selecting the event track
+    e.stopPropagation()
     if (!window.confirm("Are you entirely sure you want to delete this event activity and all its attached attendance sheets? This action is permanent.")) return
 
     try {
       const { error } = await supabase.from('events').delete().eq('id', eventId)
       if (error) throw error
-      setTrackerMessage({ text: 'Activity permanently removed from institutional log server.', type: 'success' })
+      setTrackerMessage({ text: 'Activity permanently removed from institutional database.', type: 'success' })
       fetchEvents()
     } catch (err) {
-      setTrackerMessage({ text: 'Failed to dispatch removal query against server clusters.', type: 'error' })
+      setTrackerMessage({ text: 'Failed to complete server record drop request.', type: 'error' })
     }
   }
 
-  // --- APP LEVEL FORM LOGGERS ---
   const handleCreateEvent = async (e) => {
     e.preventDefault()
     if (!newEventTitle.trim()) return
@@ -167,7 +174,7 @@ export default function AttendanceTracker({ userRole }) {
       const { error } = await supabase.from('events').insert([{ title: newEventTitle.trim(), college: userRole }])
       if (error) throw error
       setNewEventTitle('')
-      setTrackerMessage({ text: 'Event deployed to core campus framework successfully.', type: 'success' })
+      setTrackerMessage({ text: 'New tracking terminal generated and active.', type: 'success' })
       fetchEvents()
     } catch (err) {
       setTrackerMessage({ text: 'Failed to initialize event database entry.', type: 'error' })
@@ -183,28 +190,37 @@ export default function AttendanceTracker({ userRole }) {
     const student = studentDb.find(s => s.id === targetId)
 
     if (!student) {
-      setTrackerMessage({ text: `Student ID ${targetId} not registered or out of department scope.`, type: 'error' })
+      setTrackerMessage({ text: `Student ID [${targetId}] matches no records within registration scope.`, type: 'error' })
+      setInputStudentId('')
+      inputRef.current?.focus()
       return
     }
 
-    const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    const currentTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 
     try {
       const { error } = await supabase
         .from('attendance_logs')
-        .insert([{ event_id: selectedEvent.id, student_id: targetId, status: 'Present', log_time: timestamp }])
+        .insert([{ event_id: selectedEvent.id, student_id: targetId, status: 'Present', log_time: currentTime }])
 
       if (error) {
-        if (error.code === '23505') setTrackerMessage({ text: `${student.name} is already checked into this event.`, type: 'error' })
-        else throw error
+        if (error.code === '23505') {
+          setTrackerMessage({ text: `Duplicate Blocked: ${student.name} is already checked in.`, type: 'error' })
+        } else {
+          throw error
+        }
+        setInputStudentId('')
+        inputRef.current?.focus()
         return
       }
 
-      setTrackerMessage({ text: `${student.name} checked in successfully.`, type: 'success' })
+      setTrackerMessage({ text: `Verified: ${student.name} logged into event successfully.`, type: 'success' })
       setInputStudentId('')
       fetchAttendanceSheetData(selectedEvent.id)
     } catch (err) {
-      setTrackerMessage({ text: 'Failed to lock transaction on cloud ledger.', type: 'error' })
+      setTrackerMessage({ text: 'Failed to append record packet onto cloud logs.', type: 'error' })
+    } finally {
+      inputRef.current?.focus()
     }
   }
 
@@ -212,231 +228,288 @@ export default function AttendanceTracker({ userRole }) {
     student.name?.toLowerCase().includes(searchTerm.toLowerCase()) || student.id?.includes(searchTerm)
   )
 
-  // --- UI VIEW ROUTERS ---
-
-  // SCREEN A: EVENT MANAGE INDEX VIEW
+  // --- SCREEN A: EVENTS DASHBOARD SELECTION INDEX ---
   if (!selectedEvent) {
     return (
       <div className="space-y-6 animate-fade-in">
+        {/* EVENT DEPLOYMENT FORM */}
         <div className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-xs">
           <h3 className="text-xs font-black uppercase tracking-tight text-slate-900 mb-3 flex items-center gap-1.5">
-            <PlusCircle className="h-4 w-4 text-emerald-600" /> New Activity Track
+            <PlusCircle className="h-4 w-4 text-emerald-600" /> Deploy New Legislative Activity
           </h3>
           <form onSubmit={handleCreateEvent} className="flex flex-col sm:flex-row gap-2 max-w-xl">
             <input 
               type="text" 
-              placeholder="Enter Activity Title (e.g., General Assembly 2026)..."
+              placeholder="Enter Session Title (e.g., USG General Assembly 2026)..."
               value={newEventTitle}
               onChange={(e) => setNewEventTitle(e.target.value)}
-              className="flex-1 px-3 py-2 text-xs border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:ring-1 focus:ring-emerald-500 focus:outline-hidden font-semibold"
+              className="flex-1 px-3 py-2 text-xs border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:ring-1 focus:ring-emerald-500 focus:outline-hidden font-semibold text-slate-800 placeholder-slate-400"
             />
-            <button type="submit" className="bg-slate-900 hover:bg-slate-800 text-white text-xs font-black uppercase tracking-wider px-4 py-2 rounded-xl cursor-pointer">
-              Deploy Event
+            <button type="submit" className="bg-slate-900 hover:bg-slate-800 text-white text-xs font-black uppercase tracking-wider px-5 py-2.5 rounded-xl transition cursor-pointer active:scale-[0.98]">
+              Deploy Track
             </button>
           </form>
-          {trackerMessage.type === 'success' && <p className="text-[11px] font-bold text-emerald-600 mt-2">{trackerMessage.text}</p>}
+          {trackerMessage.type === 'success' && <p className="text-[11px] font-bold text-emerald-600 mt-2 flex items-center gap-1"><Check className="h-3.5 w-3.5" /> {trackerMessage.text}</p>}
         </div>
 
+        {/* ACTIVE PACKETS INDEX GRID */}
         <div className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-xs">
           <div className="flex justify-between items-center pb-3 border-b border-slate-100 mb-4">
             <div>
               <h3 className="text-xs font-black uppercase tracking-tight text-slate-900 flex items-center gap-2">
-                <Calendar className="h-4 w-4 text-slate-500" /> Active Campus Activity
+                <Calendar className="h-4 w-4 text-slate-500" /> Monitored Campus Events
               </h3>
-              <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Select an activity to proceed to attendance logs</p>
+              <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Select a session context node below to evaluate rosters</p>
             </div>
-            <button onClick={fetchEvents} className="p-1.5 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer">
+            <button onClick={fetchEvents} className="p-1.5 border border-slate-200 rounded-xl hover:bg-slate-50 transition cursor-pointer">
               <RefreshCw className={`h-3.5 w-3.5 text-slate-400 ${loading ? 'animate-spin text-emerald-600' : ''}`} />
             </button>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {eventsList.length > 0 ? (
-              eventsList.map(event => (
+          {loading && eventsList.length === 0 ? (
+            <div className="py-12 text-center text-[10px] font-mono tracking-widest text-slate-400 uppercase animate-pulse">Fetching system entities...</div>
+          ) : eventsList.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {eventsList.map(event => (
                 <div 
                   key={event.id}
                   onClick={() => setSelectedEvent(event)}
-                  className="p-4 bg-slate-50 hover:bg-emerald-50/20 border border-slate-200/60 rounded-xl transition cursor-pointer group flex items-start justify-between"
+                  className="p-4 bg-slate-50 hover:bg-white hover:shadow-md hover:border-slate-300/80 border border-slate-200/60 rounded-xl transition-all duration-200 cursor-pointer group flex items-start justify-between"
                 >
-                  <div className="space-y-1">
-                    <p className="text-xs font-black text-slate-900 group-hover:text-emerald-900 transition">{event.title}</p>
-                    <p className="text-[9px] font-mono font-bold text-slate-400 uppercase">Deployed: {event.event_date}</p>
+                  <div className="space-y-1 pr-4">
+                    <p className="text-xs font-black text-slate-900 group-hover:text-emerald-600 transition duration-150">{event.title}</p>
+                    <p className="text-[9px] font-mono font-bold text-slate-400 uppercase">System Deployment: {event.created_at ? new Date(event.created_at).toLocaleDateString() : '—'}</p>
                   </div>
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[8px] font-black bg-slate-200 text-slate-600 px-2 py-0.5 rounded-sm uppercase tracking-wider">
-                      {event.college.split('_')[0]}
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <span className="text-[8px] font-black bg-slate-200 text-slate-600 px-2 py-0.5 rounded-sm uppercase tracking-wider font-mono">
+                      {event.college ? event.college.split('_')[0] : 'USG'}
                     </span>
                     <button 
                       onClick={(e) => handleDeleteEvent(event.id, e)}
                       className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition cursor-pointer"
-                      title="Delete Event"
+                      title="Drop Event Ledger"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>
                   </div>
                 </div>
-              ))
-            ) : (
-              <p className="text-xs font-semibold text-slate-400 p-4 col-span-2 text-center">No active deployed events found for this scope terminal.</p>
-            )}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-xs font-semibold text-slate-400 p-8 text-center border border-dashed border-slate-200 rounded-xl bg-slate-50/50">No operational tracking channels found for your organizational entity branch scope.</p>
+          )}
         </div>
       </div>
     )
   }
 
-  // SCREEN B: SHEET DETAILED SYSTEM SHEET PORTAL
+  // --- SCREEN B: DETAILED ATTENDANCE MANAGEMENT SHEET ---
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* HEADER CONTROLLER BRIDGE */}
-      <div className="flex items-center justify-between bg-slate-900 text-white p-4 rounded-2xl shadow-md">
+      {/* SHEET HEADER FRAMEWORK */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between bg-slate-900 text-white p-4 rounded-2xl gap-4 shadow-md">
         <div className="flex items-center gap-3">
           <button onClick={() => setSelectedEvent(null)} className="p-2 hover:bg-white/10 rounded-full transition cursor-pointer">
             <ArrowLeft className="h-4 w-4" />
           </button>
           <div>
-            <span className="text-[8px] font-black tracking-widest text-emerald-400 uppercase bg-emerald-950 px-2 py-0.5 rounded border border-emerald-900/40">Attendance Tracker</span>
+            <span className="text-[8px] font-black tracking-widest text-emerald-400 uppercase bg-emerald-950 px-2 py-0.5 rounded border border-emerald-900/40 font-mono">Session Target Node</span>
             <h2 className="text-sm font-black tracking-tight uppercase mt-0.5">{selectedEvent.title}</h2>
           </div>
         </div>
         
-        {/* EXPORT DATA BUTTON TRIGGER */}
         <button 
           onClick={handleExportToCSV}
-          className="bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-black uppercase tracking-wider px-3 py-2 rounded-xl flex items-center gap-1.5 transition shadow-sm cursor-pointer"
+          className="bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-[10px] font-black uppercase tracking-wider px-3.5 py-2 rounded-xl flex items-center justify-center gap-1.5 transition shadow-sm cursor-pointer self-start md:self-center"
         >
-          <Download className="h-3.5 w-3.5" /> Export Spreadsheet (.CSV)
+          <Download className="h-3.5 w-3.5" /> Export Data Sheet (.CSV)
         </button>
       </div>
 
-      {/* INPUT MANUEVER PANEL ENTRY */}
+      {/* RE-ENGINEERED LIVE METRICS COUNTER GRID */}
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+        <div className="bg-white border border-slate-200/80 p-3.5 rounded-xl flex items-center gap-3 shadow-xs">
+          <div className="p-2 bg-slate-100 rounded-lg text-slate-600"><Users className="h-4 w-4" /></div>
+          <div>
+            <div className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Total Roster</div>
+            <div className="text-sm font-black text-slate-800">{totalRosterCount}</div>
+          </div>
+        </div>
+        <div className="bg-white border border-slate-200/80 p-3.5 rounded-xl flex items-center gap-3 shadow-xs">
+          <div className="p-2 bg-emerald-50 rounded-lg text-emerald-600"><UserCheck2 className="h-4 w-4" /></div>
+          <div>
+            <div className="text-[9px] font-black text-emerald-500 uppercase tracking-wider">Present</div>
+            <div className="text-sm font-black text-slate-800">{presentCount}</div>
+          </div>
+        </div>
+        <div className="bg-white border border-slate-200/80 p-3.5 rounded-xl flex items-center gap-3 shadow-xs">
+          <div className="p-2 bg-amber-50 rounded-lg text-amber-600"><HelpCircle className="h-4 w-4" /></div>
+          <div>
+            <div className="text-[9px] font-black text-amber-500 uppercase tracking-wider">Excused</div>
+            <div className="text-sm font-black text-slate-800">{excusedCount}</div>
+          </div>
+        </div>
+        <div className="bg-white border border-slate-200/80 p-3.5 rounded-xl flex items-center gap-3 shadow-xs">
+          <div className="p-2 bg-rose-50 rounded-lg text-rose-600"><UserX className="h-4 w-4" /></div>
+          <div>
+            <div className="text-[9px] font-black text-rose-400 uppercase tracking-wider">Absent</div>
+            <div className="text-sm font-black text-slate-800">{absentCount}</div>
+          </div>
+        </div>
+        <div className="bg-white border border-slate-200/80 p-3.5 rounded-xl col-span-2 lg:col-span-1 flex items-center gap-3 shadow-xs bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-emerald-50/30 via-white to-white">
+          <div className="p-2 bg-emerald-600 rounded-lg text-white font-black text-[10px] font-mono shadow-xs">{attendanceRate}%</div>
+          <div>
+            <div className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Turnout Rate</div>
+            <div className="text-sm font-black text-slate-800">Attendance</div>
+          </div>
+        </div>
+      </div>
+
+      {/* REALTIME TRANSACTIONS INPUT MODALITY */}
       <div className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-xs">
+        <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2.5 flex items-center gap-1.5">
+          <Database className="h-3.5 w-3.5 text-slate-400" /> Peripheral Terminal Scanning Interface
+        </h4>
         <form onSubmit={handleManualLog} className="flex flex-col sm:flex-row gap-2 max-w-xl">
           <input 
+            ref={inputRef}
             type="text" 
-            placeholder="Scan ID or Enter Reference Key..."
+            placeholder="Scan ID Code Bar or Process Reference Key..."
             value={inputStudentId}
             onChange={(e) => setInputStudentId(e.target.value)}
-            className="flex-1 px-3 py-2 text-xs border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:ring-1 focus:ring-emerald-500 focus:outline-hidden font-mono font-bold"
+            className="flex-1 px-3 py-2 text-xs border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:ring-1 focus:ring-emerald-500 focus:outline-hidden font-mono font-bold tracking-wide text-slate-800"
           />
-          <button type="submit" className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black uppercase tracking-wider px-5 py-2 rounded-xl flex items-center justify-center gap-1.5 cursor-pointer">
-            Log Attendance
+          <button type="submit" className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black uppercase tracking-wider px-5 py-2 rounded-xl transition cursor-pointer flex items-center justify-center gap-1">
+            Commit Register Entry
           </button>
         </form>
 
         {trackerMessage.text && (
-          <div className={`mt-3 p-2.5 rounded-xl text-[11px] font-semibold flex items-center gap-2 border ${
+          <div className={`mt-3.5 p-3 rounded-xl text-[11px] font-semibold flex items-center gap-2.5 border ${
             trackerMessage.type === 'success' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-rose-50 border-rose-200 text-rose-800'
           }`}>
-            {trackerMessage.type === 'success' ? <CheckCircle className="h-4 w-4" /> : <ShieldAlert className="h-4 w-4" />}
+            {trackerMessage.type === 'success' ? <CheckCircle className="h-4 w-4 shrink-0 text-emerald-600" /> : <ShieldAlert className="h-4 w-4 shrink-0 text-rose-600" />}
             <span>{trackerMessage.text}</span>
           </div>
         )}
       </div>
 
-      {/* CORE DATA VERIFICATION VIEW TABLE SHEET */}
+      {/* CORE DATA SHEET DATA TABLE COMPONENT */}
       <div className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-xs space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
           <div className="flex items-center gap-2">
             <ClipboardList className="h-4 w-4 text-slate-400" />
-            <h3 className="text-xs font-black uppercase tracking-tight text-slate-900">Student Sheet Logs</h3>
+            <div>
+              <h3 className="text-xs font-black uppercase tracking-tight text-slate-900"> Roster Auditing Log Ledger</h3>
+              <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">Live monitoring records from the local department directory context</p>
+            </div>
           </div>
           <input 
             type="text" 
-            placeholder="Filter database list..." 
+            placeholder="Search matching row strings..." 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="max-w-xs w-full px-3 py-1.5 text-xs border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:outline-hidden font-medium"
+            className="max-w-xs w-full px-3 py-1.5 text-xs border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:outline-hidden font-medium text-slate-700"
           />
         </div>
 
-        <div className="border border-slate-100 rounded-xl overflow-hidden bg-slate-50/30">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-slate-50 border-b border-slate-100 text-[9px] font-black uppercase tracking-widest text-slate-400">
-                <th className="p-3">ID Reference</th>
-                <th className="p-3">Student Name</th>
-                <th className="p-3">Course</th>
-                <th className="p-3">Time In</th>
-                <th className="p-3">Status State</th>
-                <th className="p-3 text-right">Edit Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 text-xs font-semibold text-slate-700">
-              {loading ? (
-                <tr><td colSpan="6" className="p-6 text-center animate-pulse text-[10px] uppercase font-mono tracking-widest text-slate-400">Querying live arrays...</td></tr>
-              ) : filteredStudents.length > 0 ? (
-                filteredStudents.map(student => {
-                  const logRecord = attendanceLogs[student.id]
-                  const isEditingThisRow = editingStudentId === student.id
+        <div className="border border-slate-200/60 rounded-xl overflow-hidden bg-slate-50/20 shadow-inner">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-slate-50 border-b border-slate-200/60 text-[9px] font-black uppercase tracking-widest text-slate-400 font-mono">
+                  <th className="p-3.5 pl-4">ID Key</th>
+                  <th className="p-3.5">Student Profile Designation</th>
+                  <th className="p-3.5">Curriculum Program Node</th>
+                  <th className="p-3.5">Timestamp</th>
+                  <th className="p-3.5">Status Flag</th>
+                  <th className="p-3.5 pr-4 text-right">System Adjustments</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 text-xs font-semibold text-slate-700 bg-white">
+                {loading ? (
+                  <tr>
+                    <td colSpan="6" className="p-12 text-center text-[10px] uppercase font-mono tracking-widest text-slate-400 animate-pulse">
+                      <RefreshCw className="h-4 w-4 animate-spin mx-auto mb-2 text-emerald-600" /> Synchronization query in process...
+                    </td>
+                  </tr>
+                ) : filteredStudents.length > 0 ? (
+                  filteredStudents.map(student => {
+                    const logRecord = attendanceLogs[student.id]
+                    const isEditingThisRow = editingStudentId === student.id
 
-                  return (
-                    <tr key={student.id} className="hover:bg-white transition-colors">
-                      <td className="p-3 font-mono text-[10px] font-bold text-slate-400">{student.id}</td>
-                      <td className="p-3 text-slate-900 font-bold">{student.name}</td>
-                      <td className="p-3 text-[11px] text-slate-500">{student.program}</td>
-                      <td className="p-3 font-mono text-[10px] text-slate-400">{logRecord ? logRecord.log_time : '—'}</td>
-                      
-                      <td className="p-3">
-                        {isEditingThisRow ? (
-                          <select 
-                            value={editStatusValue} 
-                            onChange={(e) => setEditStatusValue(e.target.value)}
-                            className="text-xs bg-white border border-slate-200 p-1 rounded-md font-bold text-slate-800"
-                          >
-                            <option value="Present">Present</option>
-                            <option value="Absent">Absent</option>
-                            <option value="Excused">Excused</option>
-                          </select>
-                        ) : (
-                          <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md ${
-                            logRecord && logRecord.status === 'Present' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
-                            logRecord && logRecord.status === 'Excused' ? 'bg-amber-50 text-amber-700 border border-amber-200' :
-                            'bg-rose-50 text-rose-700 border border-rose-200'
-                          }`}>
-                            {logRecord ? logRecord.status : 'Absent'}
-                          </span>
-                        )}
-                      </td>
+                    return (
+                      <tr key={student.id} className="hover:bg-slate-50/60 transition-colors duration-100">
+                        <td className="p-3.5 pl-4 font-mono text-[10px] font-bold text-slate-400">{student.id}</td>
+                        <td className="p-3.5 text-slate-900 font-bold">{student.name}</td>
+                        <td className="p-3.5 text-[11px] text-slate-500 font-medium uppercase tracking-tight">{student.program || 'General'}</td>
+                        <td className="p-3.5 font-mono text-[10px] text-slate-400">{logRecord ? logRecord.log_time : '—'}</td>
+                        
+                        <td className="p-3.5">
+                          {isEditingThisRow ? (
+                            <select 
+                              value={editStatusValue} 
+                              onChange={(e) => setEditStatusValue(e.target.value)}
+                              className="text-xs bg-white border border-slate-300 px-2 py-0.5 rounded-md font-bold text-slate-800 outline-hidden ring-1 ring-slate-200"
+                            >
+                              <option value="Present">Present</option>
+                              <option value="Absent">Absent</option>
+                              <option value="Excused">Excused</option>
+                            </select>
+                          ) : (
+                            <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md font-mono ${
+                              logRecord && logRecord.status === 'Present' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/60' :
+                              logRecord && logRecord.status === 'Excused' ? 'bg-amber-50 text-amber-700 border border-amber-200/60' :
+                              'bg-rose-50 text-rose-700 border border-rose-200/60'
+                            }`}>
+                              {logRecord ? logRecord.status : 'Absent'}
+                            </span>
+                          )}
+                        </td>
 
-                      <td className="p-3 text-right">
-                        {isEditingThisRow ? (
-                          <div className="flex items-center justify-end gap-1.5">
+                        <td className="p-3.5 pr-4 text-right">
+                          {isEditingThisRow ? (
+                            <div className="flex items-center justify-end gap-1">
+                              <button 
+                                onClick={() => handleSaveEditedStatus(student.id)} 
+                                className="p-1 bg-emerald-50 text-emerald-700 rounded-md border border-emerald-200 hover:bg-emerald-100 transition cursor-pointer"
+                                title="Commit Adjustments"
+                              >
+                                <Check className="h-3.5 w-3.5" />
+                              </button>
+                              <button 
+                                onClick={() => setEditingStudentId(null)} 
+                                className="p-1 bg-slate-100 text-slate-500 rounded-md border border-slate-200 hover:bg-slate-200 transition cursor-pointer"
+                                title="Discard Adjustments"
+                              >
+                                <X className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
+                          ) : (
                             <button 
-                              onClick={() => handleSaveEditedStatus(student.id)} 
-                              className="p-1 bg-emerald-50 text-emerald-700 rounded-md border border-emerald-200 hover:bg-emerald-100 cursor-pointer"
-                              title="Confirm Save"
+                              onClick={() => {
+                                setEditingStudentId(student.id)
+                                setEditStatusValue(logRecord ? logRecord.status : 'Absent')
+                              }}
+                              className="p-1 text-slate-400 hover:text-slate-800 hover:bg-slate-100 rounded-md transition inline-flex items-center gap-1 cursor-pointer font-bold text-[10px] uppercase tracking-wider"
                             >
-                              <Check className="h-3.5 w-3.5" />
+                              <Edit2 className="h-3 w-3" /> Override
                             </button>
-                            <button 
-                              onClick={() => setEditingStudentId(null)} 
-                              className="p-1 bg-slate-100 text-slate-500 rounded-md border border-slate-200 hover:bg-slate-200 cursor-pointer"
-                              title="Cancel"
-                            >
-                              <X className="h-3.5 w-3.5" />
-                            </button>
-                          </div>
-                        ) : (
-                          <button 
-                            onClick={() => {
-                              setEditingStudentId(student.id)
-                              setEditStatusValue(logRecord ? logRecord.status : 'Absent')
-                            }}
-                            className="p-1 text-slate-400 hover:text-slate-800 hover:bg-slate-100 rounded-md transition inline-flex items-center gap-1 cursor-pointer font-bold text-[10px]"
-                          >
-                            <Edit2 className="h-3.5 w-3.5" /> Edit
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  )
-                })
-              ) : (
-                <tr><td colSpan="6" className="p-6 text-center text-slate-400 text-[11px]">No structural entries matched the filter parameters.</td></tr>
-              )}
-            </tbody>
-          </table>
+                          )}
+                        </td>
+                      </tr>
+                    )
+                  })
+                ) : (
+                  <tr>
+                    <td colSpan="6" className="p-8 text-center text-slate-400 text-xs font-medium">
+                      No structural student identity files match the search filter parameters.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
