@@ -11,7 +11,7 @@ import Sidebar from './features/Sidebar'
 // UI Layout Blueprint Presentation Icons
 import { 
   Layers, Activity, Radio, FileQuestion, BarChart3, Menu,
-  LogOut, UserCheck, Sparkles, GraduationCap, User
+  LogOut, UserCheck, Sparkles, LogIn
 } from 'lucide-react'
 
 export default function App() {
@@ -148,6 +148,19 @@ export default function App() {
     return 'Council Board Admin'
   }
 
+  // Focus-navigation utility that redirects view port target straight to form panel fields
+  const scrollToLoginWidget = () => {
+    setActiveTab('dashboard')
+    setTimeout(() => {
+      const formCard = document.querySelector('form')?.closest('div')
+      if (formCard) {
+        formCard.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        formCard.classList.add('ring-2', 'ring-emerald-500', 'transition-all')
+        setTimeout(() => formCard.classList.remove('ring-2', 'ring-emerald-500'), 2000)
+      }
+    }, 150)
+  }
+
   // Packaged properties payload object to dynamically pass down to router components
   const forwardProps = {
     userRole,
@@ -209,14 +222,16 @@ export default function App() {
             </div>
           </div>
 
+          {/* DYNAMIC UTILITY INTERACTION NAVIGATION CHANNEL */}
           <div className="flex items-center gap-4 text-[11px] font-bold uppercase tracking-wider text-slate-600 mr-4">
-            <a href="#myschool" className="flex items-center gap-1 hover:text-[#004d26] transition">
-              <GraduationCap className="h-4 w-4 text-slate-400" /> MySchool
-            </a>
-            <span className="text-slate-300">|</span>
-            <a href="#mywork" className="flex items-center gap-1 hover:text-[#004d26] transition">
-              <User className="h-4 w-4 text-slate-400" /> MyWork
-            </a>
+            {!session && (
+              <button 
+                onClick={scrollToLoginWidget} 
+                className="flex items-center gap-1.5 text-emerald-700 hover:text-emerald-600 bg-emerald-50 hover:bg-emerald-100/70 border border-emerald-200/60 px-3 py-1.5 rounded-xl transition font-black cursor-pointer shadow-xs"
+              >
+                <LogIn className="h-3.5 w-3.5" /> Officer Sign In
+              </button>
+            )}
           </div>
 
           <div className="flex items-center gap-2 md:gap-3 bg-slate-50 p-1 rounded-xl border border-slate-200/50">
