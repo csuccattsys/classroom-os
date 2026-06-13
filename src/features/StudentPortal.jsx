@@ -119,7 +119,7 @@ export default function StudentPortal({
             <div className="bg-slate-900 text-white rounded-2xl p-5 border border-slate-800 shadow-xl space-y-4">
               <div className="space-y-1">
                 <div className="h-8 w-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 mb-2">
-                  <ShieldLock className="h-4 w-4" />
+                  <ShieldCheck className="h-4 w-4" />
                 </div>
                 <h3 className="text-xs font-black uppercase tracking-wider text-slate-200">Executive Login</h3>
                 <p className="text-[11px] text-slate-400 leading-relaxed">
