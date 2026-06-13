@@ -145,7 +145,7 @@ export default function AttendanceTracker({ userRole }) {
           if (error) throw error
         }
       }
-      setTrackerMessage({ text: 'Roster validation record overridden successfully.', type: 'success' })
+      setTrackerMessage({ text: 'Validation record overridden successfully.', type: 'success' })
       setEditingStudentId(null)
       fetchAttendanceSheetData(selectedEvent.id)
     } catch (err) {
@@ -235,7 +235,7 @@ export default function AttendanceTracker({ userRole }) {
         {/* EVENT DEPLOYMENT FORM */}
         <div className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-xs">
           <h3 className="text-xs font-black uppercase tracking-tight text-slate-900 mb-3 flex items-center gap-1.5">
-            <PlusCircle className="h-4 w-4 text-emerald-600" /> Deploy New Legislative Activity
+            <PlusCircle className="h-4 w-4 text-emerald-600" /> Deploy New Activity
           </h3>
           <form onSubmit={handleCreateEvent} className="flex flex-col sm:flex-row gap-2 max-w-xl">
             <input 
@@ -259,7 +259,7 @@ export default function AttendanceTracker({ userRole }) {
               <h3 className="text-xs font-black uppercase tracking-tight text-slate-900 flex items-center gap-2">
                 <Calendar className="h-4 w-4 text-slate-500" /> Monitored Campus Events
               </h3>
-              <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Select a session context node below to evaluate rosters</p>
+              <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Select an event below to start taking attendance.</p>
             </div>
             <button onClick={fetchEvents} className="p-1.5 border border-slate-200 rounded-xl hover:bg-slate-50 transition cursor-pointer">
               <RefreshCw className={`h-3.5 w-3.5 text-slate-400 ${loading ? 'animate-spin text-emerald-600' : ''}`} />
@@ -313,7 +313,7 @@ export default function AttendanceTracker({ userRole }) {
             <ArrowLeft className="h-4 w-4" />
           </button>
           <div>
-            <span className="text-[8px] font-black tracking-widest text-emerald-400 uppercase bg-emerald-950 px-2 py-0.5 rounded border border-emerald-900/40 font-mono">Session Target Node</span>
+            <span className="text-[8px] font-black tracking-widest text-emerald-400 uppercase bg-emerald-950 px-2 py-0.5 rounded border border-emerald-900/40 font-mono">Attendance Tracker for</span>
             <h2 className="text-sm font-black tracking-tight uppercase mt-0.5">{selectedEvent.title}</h2>
           </div>
         </div>
@@ -331,7 +331,7 @@ export default function AttendanceTracker({ userRole }) {
         <div className="bg-white border border-slate-200/80 p-3.5 rounded-xl flex items-center gap-3 shadow-xs">
           <div className="p-2 bg-slate-100 rounded-lg text-slate-600"><Users className="h-4 w-4" /></div>
           <div>
-            <div className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Total Roster</div>
+            <div className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Total Students</div>
             <div className="text-sm font-black text-slate-800">{totalRosterCount}</div>
           </div>
         </div>
@@ -380,7 +380,7 @@ export default function AttendanceTracker({ userRole }) {
             className="flex-1 px-3 py-2 text-xs border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:ring-1 focus:ring-emerald-500 focus:outline-hidden font-mono font-bold tracking-wide text-slate-800"
           />
           <button type="submit" className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black uppercase tracking-wider px-5 py-2 rounded-xl transition cursor-pointer flex items-center justify-center gap-1">
-            Commit Register Entry
+            Log Attendance
           </button>
         </form>
 
@@ -400,13 +400,13 @@ export default function AttendanceTracker({ userRole }) {
           <div className="flex items-center gap-2">
             <ClipboardList className="h-4 w-4 text-slate-400" />
             <div>
-              <h3 className="text-xs font-black uppercase tracking-tight text-slate-900"> Roster Auditing Log Ledger</h3>
+              <h3 className="text-xs font-black uppercase tracking-tight text-slate-900"> List of Attendees</h3>
               <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">Live monitoring records from the local department directory context</p>
             </div>
           </div>
           <input 
             type="text" 
-            placeholder="Search matching row strings..." 
+            placeholder="Search ID Number here..." 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="max-w-xs w-full px-3 py-1.5 text-xs border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:outline-hidden font-medium text-slate-700"
@@ -418,12 +418,12 @@ export default function AttendanceTracker({ userRole }) {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-200/60 text-[9px] font-black uppercase tracking-widest text-slate-400 font-mono">
-                  <th className="p-3.5 pl-4">ID Key</th>
-                  <th className="p-3.5">Student Profile Designation</th>
-                  <th className="p-3.5">Curriculum Program Node</th>
+                  <th className="p-3.5 pl-4">ID No.</th>
+                  <th className="p-3.5">Student Name</th>
+                  <th className="p-3.5">Course or Program</th>
                   <th className="p-3.5">Timestamp</th>
-                  <th className="p-3.5">Status Flag</th>
-                  <th className="p-3.5 pr-4 text-right">System Adjustments</th>
+                  <th className="p-3.5">Status</th>
+                  <th className="p-3.5 pr-4 text-right">Edit Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-xs font-semibold text-slate-700 bg-white">
@@ -493,7 +493,7 @@ export default function AttendanceTracker({ userRole }) {
                               }}
                               className="p-1 text-slate-400 hover:text-slate-800 hover:bg-slate-100 rounded-md transition inline-flex items-center gap-1 cursor-pointer font-bold text-[10px] uppercase tracking-wider"
                             >
-                              <Edit2 className="h-3 w-3" /> Override
+                              <Edit2 className="h-3 w-3" /> Edit
                             </button>
                           )}
                         </td>
