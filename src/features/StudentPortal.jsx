@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { 
   Calendar, CheckCircle, Info, Globe, Megaphone, Clock, User, 
-  HelpCircle, Link, Phone, Mail, ExternalLink, Loader2
+  HelpCircle, Link, Phone, Mail, ExternalLink, Loader2, MapPin
 } from 'lucide-react'
 // Import your pre-configured supabase client instance
 import { supabase } from '../supabaseClient' 
@@ -191,52 +191,103 @@ export default function StudentPortal({
           </div>
         </div>
 
-        {/* ================= RIGHT / SIDEBAR PUBLIC CHANNELS ================= */}
-        <div className="lg:col-span-1 space-y-4">
+        {/* ================= RIGHT / SIDEBAR ENHANCED PUBLIC CHANNELS ================= */}
+        <div className="lg:col-span-1 space-y-5">
           
-          {/* USG HELPDESK DIRECTORY */}
-          <div className="bg-white border border-slate-200 p-5 rounded-2xl space-y-3 shadow-xs">
-            <div className="flex items-center gap-2 text-slate-800 font-bold text-xs uppercase tracking-wider border-b border-slate-100 pb-2">
-              <HelpCircle className="h-4 w-4 text-emerald-600" /> USG Help Desk
-            </div>
-            <p className="text-[11px] text-slate-500 leading-relaxed">
-              Have concerns regarding local structural policies, clearance exceptions, or financial audits? Reach out directly:
-            </p>
-            <div className="space-y-2 pt-1 text-xs">
-              <div className="flex items-center gap-2 text-slate-600">
-                <Mail className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-                <span className="truncate font-mono text-[11px]">usg@csucc.edu.ph</span>
+          {/* HIGH-GRAPHICS USG HELPDESK CARD */}
+          <div className="bg-slate-900 text-white border border-slate-800 p-5 rounded-2xl space-y-4 shadow-lg relative overflow-hidden group">
+            {/* Soft decorative background glow effect */}
+            <div className="absolute -right-12 -bottom-12 w-32 h-32 bg-emerald-500/10 rounded-full blur-2xl group-hover:bg-emerald-500/20 transition-colors duration-300 pointer-events-none" />
+            
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-lg">
+                  <HelpCircle className="h-4 w-4" />
+                </div>
+                <span className="text-slate-100 font-black text-xs uppercase tracking-wider">USG Help Desk</span>
               </div>
-              <div className="flex items-center gap-2 text-slate-600">
-                <Phone className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-                <span className="font-mono text-[11px]">Office Located at near Swimming Pool alongside with LCO</span>
+              <span className="bg-emerald-500/10 text-emerald-400 text-[9px] font-bold px-2 py-0.5 rounded-full border border-emerald-500/20">
+                Live Support
+              </span>
+            </div>
+            
+            <p className="text-[11px] text-slate-400 leading-relaxed">
+              Have concerns regarding local structural policies, clearance exceptions, or financial audits? Reach out directly to our help channels:
+            </p>
+            
+            <div className="space-y-2.5 pt-1">
+              {/* Email Entry Line */}
+              <div className="flex items-center gap-3 p-2 bg-slate-950/40 rounded-xl border border-slate-800 hover:border-slate-700/80 transition-colors group/row">
+                <div className="h-7 w-7 rounded-lg bg-emerald-600/10 text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/10">
+                  <Mail className="h-3.5 w-3.5" />
+                </div>
+                <div className="flex flex-col min-w-0">
+                  <span className="text-[9px] uppercase tracking-wider font-bold text-slate-500">Official Email</span>
+                  <span className="truncate font-mono text-[11px] text-slate-300 group-hover/row:text-emerald-400 transition-colors">usg@csucc.edu.ph</span>
+                </div>
+              </div>
+
+              {/* Office Location Entry Line */}
+              <div className="flex items-start gap-3 p-2 bg-slate-950/40 rounded-xl border border-slate-800 hover:border-slate-700/80 transition-colors">
+                <div className="h-7 w-7 rounded-lg bg-emerald-600/10 text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/10 mt-0.5">
+                  <MapPin className="h-3.5 w-3.5" />
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-[9px] uppercase tracking-wider font-bold text-slate-500">Physical Office Location</span>
+                  <span className="text-[11px] text-slate-300 leading-normal font-medium">
+                    Near Swimming Pool alongside LCO Room
+                  </span>
+                </div>
               </div>
             </div>
           </div>
 
-          {/* QUICK LINKS HUB */}
-          <div className="bg-white border border-slate-200 p-5 rounded-2xl space-y-3 shadow-xs">
-            <div className="flex items-center gap-2 text-slate-800 font-bold text-xs uppercase tracking-wider border-b border-slate-100 pb-2">
-              <Link className="h-4 w-4 text-emerald-600" /> Institutional Links
+          {/* HIGH-GRAPHICS DYNAMIC INSTITUTIONAL LINKS HUB */}
+          <div className="bg-white border border-slate-200/80 p-5 rounded-2xl space-y-3.5 shadow-sm">
+            <div className="flex items-center gap-2 text-slate-800 font-bold text-xs uppercase tracking-wider border-b border-slate-100 pb-2.5">
+              <div className="p-1.5 bg-slate-50 border border-slate-200 text-slate-700 rounded-lg">
+                <Link className="h-3.5 w-3.5 text-emerald-600" />
+              </div>
+              Institutional Links Hub
             </div>
-            <div className="grid grid-cols-1 gap-2 pt-1">
+            
+            <div className="grid grid-cols-1 gap-2.5 pt-0.5">
+              {/* Link Tile 1 */}
               <a 
                 href="https://beta-myschool.csucc.edu.ph" 
                 target="_blank" 
                 rel="noreferrer" 
-                className="flex items-center justify-between p-2.5 rounded-xl border border-slate-100 hover:border-slate-200 bg-slate-50/50 hover:bg-slate-50 transition text-xs text-slate-700 font-medium group"
+                className="flex items-center justify-between p-3 rounded-xl border border-slate-100 bg-gradient-to-r from-emerald-50/20 to-slate-50/40 hover:from-emerald-50/50 hover:to-emerald-50/10 hover:border-emerald-200/60 shadow-xs transition-all duration-200 hover:-translate-y-0.5 group"
               >
-                <span>CSUCC MySchool Website</span>
-                <ExternalLink className="h-3 w-3 text-slate-400 group-hover:text-slate-600 transition-colors" />
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="h-7 w-7 rounded-lg bg-emerald-50 border border-emerald-100 text-emerald-600 flex items-center justify-center font-bold text-xs shrink-0 group-hover:bg-emerald-600 group-hover:text-white group-hover:border-emerald-600 transition-all">
+                    MS
+                  </div>
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-xs text-slate-800 font-bold tracking-tight">CSUCC MySchool Portal</span>
+                    <span className="text-[10px] text-slate-400 truncate">Grades, profiles & schedules</span>
+                  </div>
+                </div>
+                <ExternalLink className="h-3.5 w-3.5 text-slate-400 group-hover:text-emerald-600 group-hover:translate-x-0.5 transition-all shrink-0" />
               </a>
+
+              {/* Link Tile 2 */}
               <a 
                 href="https://beta.csucc.edu.ph" 
                 target="_blank" 
                 rel="noreferrer" 
-                className="flex items-center justify-between p-2.5 rounded-xl border border-slate-100 hover:border-slate-200 bg-slate-50/50 hover:bg-slate-50 transition text-xs text-slate-700 font-medium group"
+                className="flex items-center justify-between p-3 rounded-xl border border-slate-100 bg-gradient-to-r from-emerald-50/20 to-slate-50/40 hover:from-emerald-50/50 hover:to-emerald-50/10 hover:border-emerald-200/60 shadow-xs transition-all duration-200 hover:-translate-y-0.5 group"
               >
-                <span>CSUCC School Website</span>
-                <ExternalLink className="h-3 w-3 text-slate-400 group-hover:text-slate-600 transition-colors" />
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="h-7 w-7 rounded-lg bg-emerald-50 border border-emerald-100 text-emerald-600 flex items-center justify-center font-bold text-xs shrink-0 group-hover:bg-emerald-600 group-hover:text-white group-hover:border-emerald-600 transition-all">
+                    WB
+                  </div>
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-xs text-slate-800 font-bold tracking-tight">CSUCC School Website</span>
+                    <span className="text-[10px] text-slate-400 truncate">Official campus main page</span>
+                  </div>
+                </div>
+                <ExternalLink className="h-3.5 w-3.5 text-slate-400 group-hover:text-emerald-600 group-hover:translate-x-0.5 transition-all shrink-0" />
               </a>
             </div>
           </div>
