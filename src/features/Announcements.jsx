@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { supabase } from '../supabaseClient'
-import { Trash2, Megaphone, Tag, User, Image, Loader2, Sparkles } from 'lucide-react'
+import { Trash2, Megaphone, Tag, User, Image, Loader2, Sparkles, Upload } from 'lucide-react'
 
 export default function Announcements() {
   const [announcements, setAnnouncements] = useState([])
@@ -8,7 +8,10 @@ export default function Announcements() {
   const [content, setContent] = useState('')
   const [category, setCategory] = useState('General Advisory')
   const [publisher, setPublisher] = useState('')
-  const [imageUrl, setImageUrl] = useState('')
+  
+  // Image states shifted to look for file binaries
+  const [imageFile, setImageFile] = useState(null)
+  const [uploadingImage, setUploadingImage] = useState(false)
   
   const [loading, setLoading] = useState(true)
   const [posting, setPosting] = useState(false)
@@ -30,23 +33,62 @@ export default function Announcements() {
     if (!title.trim() || !content.trim()) return
 
     setPosting(true)
+    let uploadedUrl = null
+
+    // 1. Process local image file uploads to storage bucket if assigned
+    if (imageFile) {
+      try {
+        setUploadingImage(true)
+        // Generate a clean completely unique randomized path filename structure
+        const fileExt = imageFile.name.split('.').pop()
+        const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`
+        const filePath = `bulletins/${fileName}`
+
+        const { error: uploadError, data: uploadData } = await supabase.storage
+          .from('announcements')
+          .upload(filePath, imageFile)
+
+        if (uploadError) throw uploadError
+
+        // Get public download url from CDN storage container bucket safely
+        const { data: urlData } = supabase.storage
+          .from('announcements')
+          .getPublicUrl(filePath)
+
+        uploadedUrl = urlData.publicUrl
+      } catch (error) {
+        console.error('File Asset Streaming Exception:', error.message)
+        alert('Image asset routing breakdown: ' + error.message)
+        setPosting(false)
+        setUploadingImage(false)
+        return
+      }
+    }
+
+    // 2. Submit values to Postgres
     const { error } = await supabase.from('announcements').insert([
       { 
         title, 
         content,
         category,
         publisher: publisher.trim() ? publisher : 'University Student Government',
-        image_url: imageUrl.trim() ? imageUrl : null
+        image_url: uploadedUrl
       }
     ])
+    
     setPosting(false)
+    setUploadingImage(false)
     
     if (!error) { 
       setTitle('')
       setContent('')
       setCategory('General Advisory')
       setPublisher('')
-      setImageUrl('')
+      setImageFile(null)
+      // Clear out native physical DOM file input element reset
+      const fileInput = document.getElementById('bulletin-file-picker')
+      if (fileInput) fileInput.value = ''
+      
       fetchAnnouncements()
     }
   }
@@ -123,25 +165,42 @@ export default function Announcements() {
             />
           </div>
 
-          {/* Attachment Image URL Input */}
+          {/* UPLOADABLE GRAPHIC IMAGE COMPONENT UPGRADE */}
           <div>
             <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1 flex items-center gap-1">
-              <Image className="h-3 w-3" /> External Graphic Image URL
+              <Image className="h-3 w-3" /> Info Graphic Attachment
             </label>
-            <input
-              type="url"
-              value={imageUrl}
-              onChange={(e) => setImageUrl(e.target.value)}
-              placeholder="https://example.com/bulletin-banner.png"
-              className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 bg-slate-50/30 transition"
-            />
+            <div className="relative flex items-center justify-center w-full">
+              <label className="flex flex-col items-center justify-center w-full h-28 border-2 border-slate-200 border-dashed rounded-xl cursor-pointer bg-slate-50/40 hover:bg-slate-50 transition-colors group">
+                <div className="flex flex-col items-center justify-center pt-4 pb-3 text-center px-4">
+                  <Upload className="h-5 w-5 text-slate-400 group-hover:text-emerald-500 transition-colors mb-1" />
+                  <p className="text-xs text-slate-600 font-medium">
+                    {imageFile ? (
+                      <span className="text-emerald-600 font-bold truncate block max-w-[200px]">📎 {imageFile.name}</span>
+                    ) : 'Click to upload or drag image file'}
+                  </p>
+                  <p className="text-[10px] text-slate-400 mt-0.5">PNG, JPG, or WEBP formats supported</p>
+                </div>
+                <input 
+                  id="bulletin-file-picker" 
+                  type="file" 
+                  accept="image/*"
+                  onChange={(e) => {
+                    if (e.target.files && e.target.files[0]) {
+                      setImageFile(e.target.files[0])
+                    }
+                  }}
+                  className="hidden" 
+                />
+              </label>
+            </div>
           </div>
 
           {/* Main Content Body Description Text Area */}
           <div>
             <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Broadcast Parameters Description</label>
             <textarea
-              rows="4"
+              rows="3"
               value={content}
               onChange={(e) => setContent(e.target.value)}
               placeholder="Enter comprehensive announcement content details here..."
@@ -151,13 +210,13 @@ export default function Announcements() {
 
           <button
             type="submit"
-            disabled={posting}
+            disabled={posting || uploadingImage}
             className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm py-2.5 rounded-xl shadow-md transition disabled:opacity-50 flex items-center justify-center gap-2"
           >
-            {posting ? (
+            {posting || uploadingImage ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
-                Deploying Layer...
+                {uploadingImage ? 'Uploading Graphic File...' : 'Deploying Layer...'}
               </>
             ) : 'Deploy Broadcast'}
           </button>
@@ -196,7 +255,6 @@ export default function Announcements() {
                       {new Date(item.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                     </span>
                     
-                    {/* Secure Delete Management Command Trigger */}
                     <button
                       onClick={() => handleDelete(item.id)}
                       className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 border border-transparent hover:border-red-100 rounded-xl transition"
