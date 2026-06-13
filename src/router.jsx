@@ -10,11 +10,10 @@ export const routes = [
   {
     id: 'dashboard',
     label: 'Dashboard',
-    // Dynamic component assignment based on role signature
     component: (props) => props.userRole === 'student' 
-      ? <StudentPortal /> 
+      ? <StudentPortal {...props} /> 
       : <ExecutiveDashboard {...props} />,
-    requiresAuth: false // Accessible by everyone
+    requiresAuth: false
   },
   {
     id: 'attendance',
