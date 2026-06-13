@@ -118,7 +118,7 @@ export default function StudentPortal({
               </div>
               <div className="flex items-center gap-2 text-slate-600">
                 <Phone className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-                <span className="font-mono text-[11px]">Office Ext. 204</span>
+                <span className="font-mono text-[11px]">Office Located at near Swimming Pool alongside with LCO</span>
               </div>
             </div>
           </div>
@@ -130,19 +130,21 @@ export default function StudentPortal({
             </div>
             <div className="grid grid-cols-1 gap-2 pt-1">
               <a 
-                href="https://csucc.edu.ph" 
+                href="https://beta-myschool.csucc.edu.ph" 
                 target="_blank" 
                 rel="noreferrer" 
                 className="flex items-center justify-between p-2.5 rounded-xl border border-slate-100 hover:border-slate-200 bg-slate-50/50 hover:bg-slate-50 transition text-xs text-slate-700 font-medium group"
               >
-                <span>Main Campus Website</span>
+                <span>CSUCC MySchool Website</span>
                 <ExternalLink className="h-3 w-3 text-slate-400 group-hover:text-slate-600 transition-colors" />
               </a>
               <a 
-                href="#sms" 
+               href="https://beta.csucc.edu.ph" 
+                target="_blank" 
+                rel="noreferrer" 
                 className="flex items-center justify-between p-2.5 rounded-xl border border-slate-100 hover:border-slate-200 bg-slate-50/50 hover:bg-slate-50 transition text-xs text-slate-700 font-medium group"
               >
-                <span>Student Management System</span>
+                <span>CSUCC School Website</span>
                 <ExternalLink className="h-3 w-3 text-slate-400 group-hover:text-slate-600 transition-colors" />
               </a>
             </div>
