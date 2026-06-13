@@ -53,16 +53,19 @@ export default function StudentPortal({
         'postgres_changes',
         { event: '*', schema: 'public', table: 'announcements' },
         (payload) => {
-          // Handle dynamic updates seamlessly depending on the database event type
+          if (!payload) return;
+
           if (payload.eventType === 'INSERT') {
-            setAnnouncements((prev) => [payload.new, ...prev])
+            setAnnouncements((prev) => [payload.new, ...(prev || [])])
           } else if (payload.eventType === 'UPDATE') {
             setAnnouncements((prev) =>
-              prev.map((item) => (item.id === payload.new.id ? payload.new : item))
+              (prev || []).map((item) => 
+                String(item.id) === String(payload.new.id) ? payload.new : item
+              )
             );
           } else if (payload.eventType === 'DELETE') {
             setAnnouncements((prev) =>
-              prev.filter((item) => item.id !== payload.old.id)
+              (prev || []).filter((item) => String(item.id) !== String(payload.old.id))
             );
           }
         }
@@ -120,17 +123,18 @@ export default function StudentPortal({
                 <Loader2 className="h-6 w-6 text-emerald-600 animate-spin" />
                 <p className="text-xs text-slate-400 font-medium">Synchronizing with campus bulletin record tables...</p>
               </div>
-            ) : announcements.length === 0 ? (
+            ) : !announcements || announcements.length === 0 ? (
               <div className="text-center p-12 bg-white rounded-xl border border-slate-200">
                 <Megaphone className="h-8 w-8 text-slate-300 mx-auto mb-2" />
                 <p className="text-xs font-bold text-slate-700">No Announcements Posted</p>
                 <p className="text-[11px] text-slate-400 mt-0.5">The university administration dashboard hasn't published recent notices.</p>
               </div>
             ) : (
-              /* Map Array Elements directly pulled from Supabase Storage Tables */
               <div className="space-y-3">
                 {announcements.map((item) => (
-                  <div key={item.id} className="bg-white p-4 rounded-xl border border-slate-200 space-y-2 transition-all hover:border-slate-300">
+                  <div key={item.id} className="bg-white p-4 rounded-xl border border-slate-200 space-y-3 transition-all hover:border-slate-300 overflow-hidden">
+                    
+                    {/* Top Row: Meta Tags */}
                     <div className="flex justify-between items-start gap-4">
                       <span className="bg-emerald-50 text-emerald-600 border border-emerald-100 font-black text-[9px] px-2 py-0.5 rounded-md uppercase tracking-wider">
                         {item.category || 'General Advisory'}
@@ -139,11 +143,29 @@ export default function StudentPortal({
                         <Clock className="h-3 w-3" /> {formatTime(item.created_at)}
                       </div>
                     </div>
-                    <h3 className="text-xs font-bold text-slate-800">{item.title}</h3>
-                    <p className="text-xs text-slate-500 leading-relaxed whitespace-pre-wrap">
-                      {item.content}
-                    </p>
-                    <div className="pt-1 flex items-center gap-1 text-[10px] text-slate-400 font-semibold">
+                    
+                    {/* Content Section */}
+                    <div className="space-y-2">
+                      <h3 className="text-xs font-bold text-slate-800">{item.title}</h3>
+                      <p className="text-xs text-slate-500 leading-relaxed whitespace-pre-wrap">
+                        {item.content}
+                      </p>
+                    </div>
+
+                    {/* DYNAMIC ATTACHED IMAGE VIEW */}
+                    {item.image_url && (
+                      <div className="mt-2 rounded-xl overflow-hidden border border-slate-100 bg-slate-50 max-h-72 flex items-center justify-center">
+                        <img 
+                          src={item.image_url} 
+                          alt={item.title}
+                          className="w-full h-full object-cover hover:scale-[1.01] transition-transform duration-200"
+                          loading="lazy"
+                        />
+                      </div>
+                    )}
+
+                    {/* Footer: Publisher Identity */}
+                    <div className="pt-1 border-t border-slate-100 flex items-center gap-1 text-[10px] text-slate-400 font-semibold">
                       <User className="h-3 w-3 text-slate-400" /> {item.publisher || 'University Student Government'}
                     </div>
                   </div>
