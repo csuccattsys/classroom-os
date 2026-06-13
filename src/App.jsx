@@ -169,13 +169,16 @@ export default function App() {
     isRefreshing
   }
 
-  const menuItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: Layers },
-    { id: 'attendance', label: 'Activity Attendance', icon: Activity },
-    { id: 'announcements', label: 'Official Bulletin Board', icon: Radio },
-    { id: 'quizzes', label: 'Voter Polling Suite', icon: FileQuestion, locked: true },
-    { id: 'records', label: 'Legislative Audit Ledger', icon: BarChart3, locked: true },
-  ]
+  // Filter menu items dynamically: Show the navigation items only when a session is active.
+  const menuItems = session 
+    ? [
+        { id: 'dashboard', label: 'Dashboard', icon: Layers },
+        { id: 'attendance', label: 'Activity Attendance', icon: Activity },
+        { id: 'announcements', label: 'Official Bulletin Board', icon: Radio },
+        { id: 'quizzes', label: 'Voter Polling Suite', icon: FileQuestion, locked: true },
+        { id: 'records', label: 'Legislative Audit Ledger', icon: BarChart3, locked: true },
+      ]
+    : []
 
   // --- RENDERING ROUTINES (Guards & Shells) ---
   if (appLoading) {
@@ -251,14 +254,17 @@ export default function App() {
 
       {/* SCREEN PANELS ORIENTATION WRAPPER */}
       <div className="flex-1 flex min-h-0 relative">
-        <Sidebar 
-          menuItems={menuItems} 
-          activeTab={activeTab} 
-          setActiveTab={setActiveTab} 
-          userRole={userRole} 
-          sidebarOpen={sidebarOpen}
-          setSidebarOpen={setSidebarOpen}
-        />
+        {/* Only display the Sidebar layout element if menu items exist */}
+        {menuItems.length > 0 && (
+          <Sidebar 
+            menuItems={menuItems} 
+            activeTab={activeTab} 
+            setActiveTab={setActiveTab} 
+            userRole={userRole} 
+            sidebarOpen={sidebarOpen}
+            setSidebarOpen={setSidebarOpen}
+          />
+        )}
          
         <main className="flex-1 p-4 md:p-8 min-w-0 overflow-y-auto bg-white">
           <div className="max-w-5xl mx-auto">
