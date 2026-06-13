@@ -1,8 +1,7 @@
-import React, { useState } from 'react'
+import React from 'react'
 import { 
-  Calendar, CheckCircle, ShieldCheck, KeyRound, Mail, 
-  AlertCircle, Loader2, Info, LayoutDashboard, Globe,
-  Megaphone, Clock, User
+  Calendar, CheckCircle, Info, Globe, Megaphone, Clock, User, 
+  HelpCircle, Link, Phone, Mail, ExternalLink 
 } from 'lucide-react'
 
 export default function StudentPortal({
@@ -35,7 +34,7 @@ export default function StudentPortal({
         {/* ================= LEFT / MAIN HUB CONTENT ================= */}
         <div className="lg:col-span-2 space-y-4">
           
-          {/* NEW FEATURE: CAMPUS ANNOUNCEMENTS BULLETIN FEED */}
+          {/* CAMPUS ANNOUNCEMENTS BULLETIN FEED */}
           <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200/60">
             <div className="flex items-center gap-2 text-slate-800 font-bold text-xs uppercase tracking-wider mb-2">
               <Megaphone className="h-4 w-4 text-emerald-600" /> Official Campus Announcements
@@ -84,7 +83,7 @@ export default function StudentPortal({
             </div>
           </div>
 
-          {/* ABOUT US PANEL VIEW (Kept from original code background structure) */}
+          {/* ABOUT US PANEL VIEW */}
           <div className="bg-slate-50 border border-slate-200/80 p-6 rounded-2xl space-y-4">
             <div>
               <h3 className="text-xs font-black uppercase tracking-wider text-slate-800 mb-1.5 flex items-center gap-2">
@@ -96,87 +95,59 @@ export default function StudentPortal({
             </div>
             <div className="border-t border-slate-200/60 pt-4 flex justify-between items-center text-[10px] text-slate-400 font-mono">
               <span>USG Portal v1.0.0</span>
-              <span className="text-emerald-600 font-bold">Secure SSL Link Enabled</span>
+              <span>Secure SSL Link Enabled</span>
             </div>
           </div>
         </div>
 
-        {/* ================= RIGHT / CONSOLE CONTROLS SIDEBAR ================= */}
+        {/* ================= RIGHT / SIDEBAR PUBLIC CHANNELS (REPLACED LOGIN) ================= */}
         <div className="lg:col-span-1 space-y-4">
           
-          {/* INTEGRATED ACCESS PRIVILEGES INTERFACE */}
-          {!session ? (
-            <div className="bg-slate-900 text-white rounded-2xl p-5 border border-slate-800 shadow-xl space-y-4">
-              <div className="space-y-1">
-                <div className="h-8 w-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 mb-2">
-                  <ShieldCheck className="h-4 w-4" />
-                </div>
-                <h3 className="text-xs font-black uppercase tracking-wider text-slate-200">Executive Login</h3>
-                <p className="text-[11px] text-slate-400 leading-relaxed">
-                  USG Officers and LSG members can verify administrative clearance here.
-                </p>
+          {/* USG HELPDESK DIRECTORY */}
+          <div className="bg-white border border-slate-200 p-5 rounded-2xl space-y-3 shadow-xs">
+            <div className="flex items-center gap-2 text-slate-800 font-bold text-xs uppercase tracking-wider border-b border-slate-100 pb-2">
+              <HelpCircle className="h-4 w-4 text-emerald-600" /> USG Help Desk
+            </div>
+            <p className="text-[11px] text-slate-500 leading-relaxed">
+              Have concerns regarding local structural policies, clearance exceptions, or financial audits? Reach out directly:
+            </p>
+            <div className="space-y-2 pt-1 text-xs">
+              <div className="flex items-center gap-2 text-slate-600">
+                <Mail className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                <span className="truncate font-mono text-[11px]">usg@csucc.edu.ph</span>
               </div>
-
-              <form onSubmit={handleLoginSubmit} className="space-y-3">
-                <div className="space-y-1">
-                  <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block">User Email</label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-2.5 h-3.5 w-3.5 text-slate-500" />
-                    <input 
-                      type="email" 
-                      required 
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="name@csucc.edu.ph" 
-                      className="w-full bg-slate-950/60 border border-slate-800 rounded-xl py-2 pl-9 pr-4 text-xs font-medium text-slate-200 placeholder:text-slate-600 focus:outline-hidden focus:border-emerald-500 transition-colors"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block">User Password</label>
-                  <div className="relative">
-                    <KeyRound className="absolute left-3 top-2.5 h-3.5 w-3.5 text-slate-500" />
-                    <input 
-                      type="password" 
-                      required 
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="••••••••" 
-                      className="w-full bg-slate-950/60 border border-slate-800 rounded-xl py-2 pl-9 pr-4 text-xs font-medium text-slate-200 placeholder:text-slate-600 focus:outline-hidden focus:border-emerald-500 transition-colors"
-                    />
-                  </div>
-                </div>
-
-                {loginError && (
-                  <div className="bg-rose-500/10 border border-rose-500/20 text-rose-400 p-2.5 rounded-xl flex items-start gap-2 text-[10px] leading-normal font-medium">
-                    <AlertCircle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
-                    <span>{loginError}</span>
-                  </div>
-                )}
-
-                <button 
-                  type="submit" 
-                  disabled={authProcessing}
-                  className="w-full bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 disabled:bg-slate-800 text-slate-900 disabled:text-slate-500 font-black text-xs uppercase tracking-wider py-2.5 px-4 rounded-xl transition shadow-md shadow-emerald-950/20 flex items-center justify-center gap-2 cursor-pointer mt-2"
-                >
-                  {authProcessing ? (
-                    <>
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      Validating Secure Node...
-                    </>
-                  ) : (
-                    'Enter Portal'
-                  )}
-                </button>
-              </form>
+              <div className="flex items-center gap-2 text-slate-600">
+                <Phone className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                <span className="font-mono text-[11px]">Office Ext. 204</span>
+              </div>
             </div>
-          ) : (
-            <div className="bg-emerald-950/30 border border-emerald-900/30 text-emerald-400 rounded-2xl p-5 text-center text-xs font-bold space-y-1 animate-fade-in">
-              <p></p>
-              <p className="text-[10px] text-slate-400 font-normal">Use the application sidebar panel menu to switch to restricted officer tools.</p>
+          </div>
+
+          {/* QUICK LINKS HUB */}
+          <div className="bg-white border border-slate-200 p-5 rounded-2xl space-y-3 shadow-xs">
+            <div className="flex items-center gap-2 text-slate-800 font-bold text-xs uppercase tracking-wider border-b border-slate-100 pb-2">
+              <Link className="h-4 w-4 text-emerald-600" /> Institutional Links
             </div>
-          )}
+            <div className="grid grid-cols-1 gap-2 pt-1">
+              <a 
+                href="https://csucc.edu.ph" 
+                target="_blank" 
+                rel="noreferrer" 
+                className="flex items-center justify-between p-2.5 rounded-xl border border-slate-100 hover:border-slate-200 bg-slate-50/50 hover:bg-slate-50 transition text-xs text-slate-700 font-medium group"
+              >
+                <span>Main Campus Website</span>
+                <ExternalLink className="h-3 w-3 text-slate-400 group-hover:text-slate-600 transition-colors" />
+              </a>
+              <a 
+                href="#sms" 
+                className="flex items-center justify-between p-2.5 rounded-xl border border-slate-100 hover:border-slate-200 bg-slate-50/50 hover:bg-slate-50 transition text-xs text-slate-700 font-medium group"
+              >
+                <span>Student Management System</span>
+                <ExternalLink className="h-3 w-3 text-slate-400 group-hover:text-slate-600 transition-colors" />
+              </a>
+            </div>
+          </div>
+
         </div>
 
       </div>
