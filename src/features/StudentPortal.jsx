@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { 
-  Calendar, CheckCircle, ShieldLock, KeyRound, Mail, 
+  Calendar, CheckCircle, ShieldCheck, KeyRound, Mail, 
   AlertCircle, Loader2, Info, LayoutDashboard, Globe
 } from 'lucide-react'
 
