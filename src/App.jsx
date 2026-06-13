@@ -11,7 +11,7 @@ import Sidebar from './features/Sidebar'
 // UI Layout Blueprint Presentation Icons
 import { 
   Layers, Activity, Radio, FileQuestion, BarChart3, Menu,
-  LogOut, UserCheck, Sparkles, LogIn
+  LogOut, UserCheck, Sparkles, LogIn, X, Mail, KeyRound, AlertCircle, Loader2
 } from 'lucide-react'
 
 export default function App() {
@@ -22,7 +22,8 @@ export default function App() {
   const [appLoading, setAppLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('dashboard')
   
-  // Authentication Form Screen Interactions
+  // Authentication Form & Modal States
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loginError, setLoginError] = useState('')
@@ -78,6 +79,7 @@ export default function App() {
       if (session) {
         setSession(session)
         setIsPublicObserver(false)
+        setIsLoginModalOpen(false) // Auto-close modal layout on successful clearance entry
         fetchUserProfile(session.user.id)
       } else {
         setSession(null)
@@ -148,19 +150,6 @@ export default function App() {
     return 'Council Board Admin'
   }
 
-  // Focus-navigation utility that redirects view port target straight to form panel fields
-  const scrollToLoginWidget = () => {
-    setActiveTab('dashboard')
-    setTimeout(() => {
-      const formCard = document.querySelector('form')?.closest('div')
-      if (formCard) {
-        formCard.scrollIntoView({ behavior: 'smooth', block: 'center' })
-        formCard.classList.add('ring-2', 'ring-emerald-500', 'transition-all')
-        setTimeout(() => formCard.classList.remove('ring-2', 'ring-emerald-500'), 2000)
-      }
-    }, 150)
-  }
-
   // Packaged properties payload object to dynamically pass down to router components
   const forwardProps = {
     userRole,
@@ -226,7 +215,7 @@ export default function App() {
           <div className="flex items-center gap-4 text-[11px] font-bold uppercase tracking-wider text-slate-600 mr-4">
             {!session && (
               <button 
-                onClick={scrollToLoginWidget} 
+                onClick={() => setIsLoginModalOpen(true)} 
                 className="flex items-center gap-1.5 text-emerald-700 hover:text-emerald-600 bg-emerald-50 hover:bg-emerald-100/70 border border-emerald-200/60 px-3 py-1.5 rounded-xl transition font-black cursor-pointer shadow-xs"
               >
                 <LogIn className="h-3.5 w-3.5" /> Officer Sign In
@@ -281,6 +270,86 @@ export default function App() {
           </div>
         </main>
       </div>
+
+      {/* ================= EXECUTIVE TERMINAL LOGIN OVERLAY MODAL ================= */}
+      {isLoginModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fade-in">
+          <div className="bg-slate-900 border border-slate-800 text-white rounded-2xl w-full max-w-sm p-6 shadow-2xl relative space-y-4">
+            
+            {/* Close Modal Button Controls */}
+            <button 
+              onClick={() => { setIsLoginModalOpen(false); setLoginError(''); }}
+              className="absolute top-4 right-4 text-slate-500 hover:text-slate-300 transition-colors cursor-pointer p-1 rounded-lg hover:bg-slate-800"
+            >
+              <X className="h-4 w-4" />
+            </button>
+
+            <div className="space-y-1">
+              <div className="h-9 w-9 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 mb-2">
+                <Sparkles className="h-4 w-4 animate-pulse" />
+              </div>
+              <h3 className="text-sm font-black uppercase tracking-wider text-slate-100">Executive Gateway Login</h3>
+              <p className="text-xs text-slate-400 leading-relaxed">
+                USG Officers and Local Council board members can sign in below to verify institutional RBAC permissions.
+              </p>
+            </div>
+
+            <form onSubmit={handleLoginSubmit} className="space-y-3 pt-2">
+              <div className="space-y-1">
+                <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block">User Email Address</label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-2.5 h-3.5 w-3.5 text-slate-500" />
+                  <input 
+                    type="email" 
+                    required 
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="username@csucc.edu.ph" 
+                    className="w-full bg-slate-950/60 border border-slate-800 rounded-xl py-2 pl-9 pr-4 text-xs font-medium text-slate-200 placeholder:text-slate-600 focus:outline-hidden focus:border-emerald-500 transition-colors"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block">Access Key Password</label>
+                <div className="relative">
+                  <KeyRound className="absolute left-3 top-2.5 h-3.5 w-3.5 text-slate-500" />
+                  <input 
+                    type="password" 
+                    required 
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••" 
+                    className="w-full bg-slate-950/60 border border-slate-800 rounded-xl py-2 pl-9 pr-4 text-xs font-medium text-slate-200 placeholder:text-slate-600 focus:outline-hidden focus:border-emerald-500 transition-colors"
+                  />
+                </div>
+              </div>
+
+              {loginError && (
+                <div className="bg-rose-500/10 border border-rose-500/20 text-rose-400 p-2.5 rounded-xl flex items-start gap-2 text-[10px] leading-normal font-medium animate-shake">
+                  <AlertCircle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+                  <span>{loginError}</span>
+                </div>
+              )}
+
+              <button 
+                type="submit" 
+                disabled={authProcessing}
+                className="w-full bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 disabled:bg-slate-800 text-slate-900 disabled:text-slate-500 font-black text-xs uppercase tracking-wider py-2.5 px-4 rounded-xl transition shadow-md shadow-emerald-950/20 flex items-center justify-center gap-2 cursor-pointer mt-4"
+              >
+                {authProcessing ? (
+                  <>
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    Validating Security Node...
+                  </>
+                ) : (
+                  'Authorize Terminal'
+                )}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
