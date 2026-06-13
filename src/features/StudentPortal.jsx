@@ -196,4 +196,80 @@ export default function StudentPortal({
                 </div>
                 <h3 className="text-xs font-black uppercase tracking-wider text-slate-100">Executive Login</h3>
                 <p className="text-[11px] leading-relaxed text-slate-400">
-                  USG Officers and LS
+                  USG Officers and LSG members can verify administrative clearance here.
+                </p>
+              </div>
+
+              <form onSubmit={handleLoginSubmit} className="space-y-3 relative z-10">
+                <div className="space-y-1">
+                  <label className="block text-[9px] font-black uppercase tracking-widest text-slate-400">User Email</label>
+                  <div className="relative">
+                    <Mail className="absolute top-2.5 left-3 h-3.5 w-3.5 text-slate-500" />
+                    <input 
+                      type="email" 
+                      required 
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="name@csucc.edu.ph" 
+                      className="w-full rounded-xl border border-slate-800 bg-slate-950/60 py-2 pr-4 pl-9 text-xs font-medium text-slate-200 transition-all duration-150 placeholder:text-slate-600 focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500/20"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="block text-[9px] font-black uppercase tracking-widest text-slate-400">User Password</label>
+                  <div className="relative">
+                    <KeyRound className="absolute top-2.5 left-3 h-3.5 w-3.5 text-slate-500" />
+                    <input 
+                      type="password" 
+                      required 
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="••••••••" 
+                      className="w-full rounded-xl border border-slate-800 bg-slate-950/60 py-2 pr-4 pl-9 text-xs font-medium text-slate-200 transition-all duration-150 placeholder:text-slate-600 focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500/20"
+                    />
+                  </div>
+                </div>
+
+                {loginError && (
+                  <div className="flex items-start gap-2 rounded-xl border border-rose-500/20 bg-rose-500/10 p-2.5 text-[10px] font-medium leading-normal text-rose-400 animate-shake">
+                    <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-rose-500" />
+                    <span>{loginError}</span>
+                  </div>
+                )}
+
+                <button 
+                  type="submit" 
+                  disabled={authProcessing}
+                  className="group mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 py-2.5 px-4 text-xs font-black uppercase tracking-wider text-slate-950 shadow-md shadow-emerald-950/20 transition-all duration-200 cursor-pointer hover:bg-emerald-500 active:bg-emerald-700 disabled:bg-slate-800 disabled:text-slate-500"
+                >
+                  {authProcessing ? (
+                    <>
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      Validating Secure Node...
+                    </>
+                  ) : (
+                    <>
+                      <span>Enter Portal</span>
+                      <ArrowUpRight className="h-3 w-3 opacity-60 transition-transform duration-200 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+                    </>
+                  )}
+                </button>
+              </form>
+            </div>
+          ) : (
+            /* ENHANCED SECURITY STATE SIGNATURE BADGING LAYER */
+            <div className="rounded-2xl border border-emerald-900/20 bg-emerald-950/20 p-5 text-center text-xs font-bold shadow-xs animate-fade-in space-y-2">
+              <div className="mx-auto flex h-8 w-8 items-center justify-center rounded-full border border-emerald-500/20 bg-emerald-500/10 text-emerald-400">
+                <Terminal className="h-4 w-4" />
+              </div>
+              <p className="text-[10px] uppercase tracking-widest text-emerald-400">Clearance Approved</p>
+              <p className="text-[10px] font-normal leading-relaxed text-slate-400">Use the application sidebar panel menu to switch to restricted officer tools.</p>
+            </div>
+          )}
+        </div>
+
+      </div>
+    </div>
+  )
+}
