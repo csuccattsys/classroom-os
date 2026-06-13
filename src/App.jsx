@@ -2,16 +2,18 @@ import React, { useState, useEffect } from 'react'
 import { supabase } from './supabaseClient'
 import usgLogo from './FB_IMG_1781228236447.jpg'
 
+// Features Feature Imports
 import AttendanceTracker from './features/AttendanceTracker'
 import Announcements from './features/Announcements'
 import LoginGateway from './features/LoginGateway'
 import Sidebar from './features/Sidebar'
-import StudentPortal from './features/StudentPortal' // <-- Linked to your existing file cleanly!
+import StudentPortal from './features/StudentPortal'
+import ExecutiveDashboard from './features/ExecutiveDashboard' // <-- Newly extracted discrete component!
 
+// UI Blueprint Layout Icons
 import { 
   Layers, Activity, Radio, FileQuestion, BarChart3, Lock, Menu,
-  TrendingUp, Clock, Building2, LogOut, UserCheck, Sparkles,
-  Zap, RefreshCw, ShieldAlert, GraduationCap, User
+  LogOut, UserCheck, Sparkles, GraduationCap, User
 } from 'lucide-react'
 
 export default function App() {
@@ -25,34 +27,28 @@ export default function App() {
   const [password, setPassword] = useState('')
   const [loginError, setLoginError] = useState('')
   const [authProcessing, setAuthProcessing] = useState(false)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
-  // 💡 Gemini Navigation Control Engine State Hooks
-  const [sidebarOpen, setSidebarOpen] = useState(false) // Default to closed/icon-only view
-
-  // 🛠️ Feasible Context Feature States
+  // System Context Operational hooks
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [systemTime, setSystemTime] = useState(new Date().toLocaleTimeString())
 
   // --- NATIVE URL ROUTING SYNC ENGINE ---
   useEffect(() => {
-    // Read URL hash on load and match tabs
     const handleUrlRouting = () => {
       const hash = window.location.hash.replace('#', '')
       const validTabs = ['dashboard', 'attendance', 'announcements', 'quizzes', 'records']
       if (validTabs.includes(hash)) {
         setActiveTab(hash)
       } else {
-        window.location.hash = activeTab // fallback to current valid tab if address is empty
+        window.location.hash = activeTab
       }
     }
-
-    // Run on startup and listen for user browser forward/backward navigation clicks
     handleUrlRouting()
     window.addEventListener('hashchange', handleUrlRouting)
     return () => window.removeEventListener('hashchange', handleUrlRouting)
   }, [])
 
-  // Sync back to URL hash bar whenever state switches programmatically
   useEffect(() => {
     if (window.location.hash !== `#${activeTab}`) {
       window.location.hash = activeTab
@@ -66,6 +62,7 @@ export default function App() {
     return () => clearInterval(timer)
   }, [])
 
+  // --- IDENTITY & RBAC ACCESS ENGINE ---
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
@@ -157,28 +154,32 @@ export default function App() {
     }, 900)
   }
 
-  const getRoleBadgeDetails = () => {
-    switch (userRole) {
-      case 'usg': return { label: 'USG Executive', color: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' }
-      case 'cba_lsg': return { label: 'CBA LSG Council', color: 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30' }
-      case 'ceit_lsg': return { label: 'CEIT LSG Council', color: 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30' }
-      case 'citte_lsg': return { label: 'CITTE LSG Council', color: 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30' }
-      case 'cthm_lsg': return { label: 'CTHM LSG Council', color: 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30' }
-      case 'ssg': return { label: 'DLHS SSG Officer', color: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30' }
-      default: return { label: 'Student Body Observer', color: 'bg-amber-500/20 text-amber-400 border-amber-500/30' }
-    }
-  }
-
   const isAnyCollegeLSG = ['cba_lsg', 'ceit_lsg', 'citte_lsg', 'cthm_lsg'].includes(userRole)
 
+  // --- DYNAMIC SWITCH ROUTER CONTEXT ---
   const renderContent = () => {
     switch (activeTab) {
-      case 'dashboard': return renderExecutiveDashboard()
+      case 'dashboard': 
+        return userRole === 'student' ? (
+          <StudentPortal />
+        ) : (
+          <ExecutiveDashboard 
+            userRole={userRole}
+            session={session}
+            isPublicObserver={isPublicObserver}
+            systemTime={systemTime}
+            setActiveTab={setActiveTab}
+            triggerCacheFlush={triggerCacheFlush}
+            isRefreshing={isRefreshing}
+          />
+        )
       case 'attendance':
         if (userRole === 'usg' || isAnyCollegeLSG) return <AttendanceTracker userRole={userRole} />
         return renderAccessDenied("University Student Government or authorized College LSG Board clearance is required to process college student event logs.")
-      case 'announcements': return <Announcements userRole={userRole} />
-      default: return renderExecutiveDashboard()
+      case 'announcements': 
+        return <Announcements userRole={userRole} />
+      default: 
+        return <StudentPortal />
     }
   }
 
@@ -191,88 +192,10 @@ export default function App() {
     </div>
   )
 
-  const renderExecutiveDashboard = () => {
-    if (userRole === 'student') {
-      return <StudentPortal />
-    }
-
-    return (
-      <div className="space-y-6 animate-fade-in">
-        <div className="bg-gradient-to-r from-emerald-950 via-slate-900 to-emerald-950 rounded-2xl p-6 text-white border border-emerald-900/30 shadow-xl relative overflow-hidden">
-          <div className="space-y-1.5 relative z-10">
-            <span className={`border text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-md ${getRoleBadgeDetails().color}`}>{getRoleBadgeDetails().label} Panel</span>
-            <h2 className="text-xl font-black tracking-tight pt-2">CSUCC Governance Portal</h2>
-            <p className="text-xs text-slate-400 max-w-xl">
-              Active Session Identity: <span className="text-slate-200 font-mono font-bold">{isPublicObserver ? 'Guest Student Node (Read-Only)' : session?.user?.email}</span>
-            </p>
-          </div>
-        </div>
-
-        {/* ADMINISTRATIVE QUICK-ACTIONS */}
-        <div className="bg-slate-50 border border-slate-200/60 rounded-2xl p-4">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
-              <Zap className="h-3.5 w-3.5 text-amber-500" /> Quick Actions
-            </h3>
-            <span className="text-[10px] font-mono font-bold text-slate-500 bg-slate-200/50 px-2 py-0.5 rounded-md">
-              Clock: {systemTime}
-            </span>
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-            <button 
-              onClick={() => setActiveTab('attendance')}
-              className="p-2.5 bg-white border border-slate-200 rounded-xl text-left hover:border-emerald-500 transition group cursor-pointer"
-            >
-              <p className="text-[10px] font-bold text-slate-800 group-hover:text-emerald-700">Log Attendance</p>
-              <p className="text-[9px] text-slate-400 mt-0.5">Open scanner interface</p>
-            </button>
-            <button 
-              onClick={() => setActiveTab('announcements')}
-              className="p-2.5 bg-white border border-slate-200 rounded-xl text-left hover:border-indigo-500 transition group cursor-pointer"
-            >
-              <p className="text-[10px] font-bold text-slate-800 group-hover:text-indigo-700">Post Bulletin</p>
-              <p className="text-[9px] text-slate-400 mt-0.5">Broadcast info alerts</p>
-            </button>
-            <button 
-              onClick={triggerCacheFlush}
-              className="p-2.5 bg-white border border-slate-200 rounded-xl text-left hover:border-cyan-500 transition group cursor-pointer flex flex-col justify-between"
-            >
-              <div className="flex items-center justify-between w-full">
-                <p className="text-[10px] font-bold text-slate-800 group-hover:text-cyan-700">Sync Ledger</p>
-                <RefreshCw className={`h-3 w-3 text-slate-400 ${isRefreshing ? 'animate-spin text-cyan-600' : ''}`} />
-              </div>
-              <p className="text-[9px] text-slate-400 mt-0.5">Force flush static data cache</p>
-            </button>
-            <div className="p-2.5 bg-slate-100/70 border border-slate-200/40 rounded-xl text-left flex items-center gap-2">
-              <ShieldAlert className="h-4 w-4 text-emerald-600 shrink-0" />
-              <div>
-                <p className="text-[10px] font-bold text-slate-700">SSL Connection</p>
-                <p className="text-[9px] text-emerald-600 font-bold uppercase tracking-wider">Secure Node</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {[
-            { label: 'Campus Activity Turnout', value: '89.4%', icon: TrendingUp, color: 'text-emerald-600', bg: 'bg-emerald-50/40' },
-            { label: 'Recognized Student Orgs', value: '24 Units', icon: Building2, color: 'text-indigo-600', bg: 'bg-indigo-50/40' },
-            { label: 'System Database Sync Latency', value: '0.23 ms', icon: Clock, color: 'text-amber-600', bg: 'bg-amber-50/40' },
-          ].map((stat, idx) => {
-            const StatIcon = stat.icon
-            return (
-              <div key={idx} className="bg-white p-5 rounded-2xl border border-slate-100 shadow-xs flex items-center justify-between">
-                <div className="space-y-1">
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{stat.label}</p>
-                  <p className="text-xl font-black text-slate-900">{stat.value}</p>
-                </div>
-                <div className={`p-2.5 rounded-xl ${stat.bg} ${stat.color}`}><StatIcon className="h-4 w-4" /></div>
-              </div>
-            )
-          })}
-        </div>
-      </div>
-    )
+  const getRoleHeaderLabel = () => {
+    if (userRole === 'student') return 'Student Observer'
+    if (userRole === 'usg') return 'USG Executive'
+    return 'Council Board Admin'
   }
 
   const menuItems = [
@@ -310,7 +233,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-white flex flex-col font-sans antialiased text-slate-900 selection:bg-emerald-600 selection:text-white">
-      {/* GLOBAL HEADER INFRASTRUCTURE */}
+      {/* UNIVERSAL CORE APP HEADER */}
       <header className="bg-white border-b border-slate-200/80 px-4 md:px-6 py-4 sticky top-0 z-50 backdrop-blur-md bg-white/90">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
           <div className="flex items-center gap-2 md:gap-3">
@@ -343,7 +266,7 @@ export default function App() {
           <div className="flex items-center gap-2 md:gap-3 bg-slate-50 p-1 rounded-xl border border-slate-200/50">
             <div className="flex items-center gap-1.5 bg-white px-2.5 py-1.5 rounded-lg border border-slate-100 shadow-xs">
               <UserCheck className="h-3.5 w-3.5 text-emerald-600" />
-              <span className="text-[9px] md:text-[10px] font-black uppercase text-slate-700 tracking-wider">{getRoleBadgeDetails().label}</span>
+              <span className="text-[9px] md:text-[10px] font-black uppercase text-slate-700 tracking-wider">{getRoleHeaderLabel()}</span>
             </div>
             <button onClick={handleLogout} className="text-slate-400 hover:text-rose-600 text-[9px] md:text-[10px] font-black uppercase tracking-wider transition-colors flex items-center gap-1 pr-2 pl-1 cursor-pointer">
               <LogOut className="h-3 w-3" /> <span className="hidden xs:inline">Exit Terminal</span>
@@ -352,7 +275,7 @@ export default function App() {
         </div>
       </header>
 
-      {/* QUICK ANNOUNCEMENT TICKER BANNER */}
+      {/* SYSTEM BROADCAST NEWS FLASH */}
       <div className="bg-emerald-900 text-white py-1.5 px-4 overflow-hidden relative border-b border-emerald-950 flex items-center text-[10px] font-semibold tracking-wide">
         <span className="bg-emerald-600 text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md mr-3 shadow-xs shrink-0 z-10">BULLETIN</span>
         <div className="animate-marquee whitespace-nowrap loop-scroll flex gap-8">
@@ -361,7 +284,7 @@ export default function App() {
         </div>
       </div>
 
-      {/* CORE FRAME LAYOUT */}
+      {/* SCREEN ORIENTATION WRAPPER */}
       <div className="flex-1 flex min-h-0 relative">
         <Sidebar 
           menuItems={menuItems} 
