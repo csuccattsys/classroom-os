@@ -20,8 +20,9 @@ export default function StudentPortal({
   const [announcements, setAnnouncements] = useState([])
   const [isLoading, setIsLoading] = useState(true)
 
-  // Fetch real-time records from Supabase on component mount
+  // Fetch real-time records and subscribe to live changes from Supabase
   useEffect(() => {
+    // 1. Initial Data Fetch
     async function fetchAnnouncements() {
       try {
         setIsLoading(true)
@@ -44,6 +45,34 @@ export default function StudentPortal({
     }
 
     fetchAnnouncements()
+
+    // 2. Realtime Database Subscription Pipeline
+    const announcementsChannel = supabase
+      .channel('public:announcements')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'announcements' },
+        (payload) => {
+          // Handle dynamic updates seamlessly depending on the database event type
+          if (payload.eventType === 'INSERT') {
+            setAnnouncements((prev) => [payload.new, ...prev])
+          } else if (payload.eventType === 'UPDATE') {
+            setAnnouncements((prev) =>
+              prev.map((item) => (item.id === payload.new.id ? payload.new : item))
+            );
+          } else if (payload.eventType === 'DELETE') {
+            setAnnouncements((prev) =>
+              prev.filter((item) => item.id !== payload.old.id)
+            );
+          }
+        }
+      )
+      .subscribe()
+
+    // Clean up pipeline listener on component unmount
+    return () => {
+      supabase.removeChannel(announcementsChannel)
+    }
   }, [])
 
   // Helper function to render clean local relative time strings
