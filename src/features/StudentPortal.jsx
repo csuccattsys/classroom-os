@@ -1,8 +1,10 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { 
   Calendar, CheckCircle, Info, Globe, Megaphone, Clock, User, 
-  HelpCircle, Link, Phone, Mail, ExternalLink 
+  HelpCircle, Link, Phone, Mail, ExternalLink, Loader2
 } from 'lucide-react'
+// Import your pre-configured supabase client instance
+import { supabase } from '../supabaseClient' 
 
 export default function StudentPortal({
   session,
@@ -14,6 +16,48 @@ export default function StudentPortal({
   authProcessing,
   handleLoginSubmit
 }) {
+  // State management for live database streaming
+  const [announcements, setAnnouncements] = useState([])
+  const [isLoading, setIsLoading] = useState(true)
+
+  // Fetch real-time records from Supabase on component mount
+  useEffect(() => {
+    async function fetchAnnouncements() {
+      try {
+        setIsLoading(true)
+        
+        const { data, error } = await supabase
+          .from('announcements')
+          .select('*')
+          .order('created_at', { ascending: false }) // Keep newest items on top
+
+        if (error) throw error
+
+        if (data) {
+          setAnnouncements(data)
+        }
+      } catch (error) {
+        console.error('Error streaming announcements ledger:', error.message)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchAnnouncements()
+  }, [])
+
+  // Helper function to render clean local relative time strings
+  const formatTime = (timestamp) => {
+    if (!timestamp) return 'Just now'
+    const date = new Date(timestamp)
+    return date.toLocaleDateString(undefined, { 
+      month: 'short', 
+      day: 'numeric', 
+      hour: '2-digit', 
+      minute: '2-digit' 
+    })
+  }
+
   return (
     <div className="space-y-6 animate-fade-in">
       
@@ -41,46 +85,42 @@ export default function StudentPortal({
             </div>
             <p className="text-xs text-slate-500 mb-4">Stay informed with real-time news, advisories, and updates directly from the USG.</p>
             
-            {/* Announcement Feed Stack */}
-            <div className="space-y-3">
-              {/* Announcement Item 1 */}
-              <div className="bg-white p-4 rounded-xl border border-slate-200 space-y-2">
-                <div className="flex justify-between items-start gap-4">
-                  <span className="bg-emerald-50 text-emerald-600 border border-emerald-100 font-black text-[9px] px-2 py-0.5 rounded-md uppercase tracking-wider">
-                    General Advisory
-                  </span>
-                  <div className="flex items-center gap-1.5 text-[10px] text-slate-400 font-medium">
-                    <Clock className="h-3 w-3" /> Just now
-                  </div>
-                </div>
-                <h3 className="text-xs font-bold text-slate-800">Distribution of Student ID Lanyards</h3>
-                <p className="text-xs text-slate-500 leading-relaxed">
-                  All undergraduate students can now collect their official university lanyards at the USG Executive Office. Please present your valid digital certificate of registration (COR) upon claiming.
-                </p>
-                <div className="pt-1 flex items-center gap-1 text-[10px] text-slate-400 font-semibold">
-                  <User className="h-3 w-3 text-slate-400" /> Public Relations Office
-                </div>
+            {/* Dynamic Content Loader Conditionals */}
+            {isLoading ? (
+              <div className="flex flex-col items-center justify-center p-12 bg-white rounded-xl border border-slate-200 space-y-2">
+                <Loader2 className="h-6 w-6 text-emerald-600 animate-spin" />
+                <p className="text-xs text-slate-400 font-medium">Synchronizing with campus bulletin record tables...</p>
               </div>
-
-              {/* Announcement Item 2 */}
-              <div className="bg-white p-4 rounded-xl border border-slate-200 space-y-2">
-                <div className="flex justify-between items-start gap-4">
-                  <span className="bg-amber-50 text-amber-600 border border-amber-100 font-black text-[9px] px-2 py-0.5 rounded-md uppercase tracking-wider">
-                    Academic
-                  </span>
-                  <div className="flex items-center gap-1.5 text-[10px] text-slate-400 font-medium">
-                    <Clock className="h-3 w-3" /> Yesterday
-                  </div>
-                </div>
-                <h3 className="text-xs font-bold text-slate-800">Midterm Examination Clearance Period</h3>
-                <p className="text-xs text-slate-500 leading-relaxed">
-                  Make sure to coordinate with your respective Local Student Governments (LSGs) to process municipal fine event clearances ahead of the upcoming examination week.
-                </p>
-                <div className="pt-1 flex items-center gap-1 text-[10px] text-slate-400 font-semibold">
-                  <User className="h-3 w-3 text-slate-400" /> Judiciary Branch
-                </div>
+            ) : announcements.length === 0 ? (
+              <div className="text-center p-12 bg-white rounded-xl border border-slate-200">
+                <Megaphone className="h-8 w-8 text-slate-300 mx-auto mb-2" />
+                <p className="text-xs font-bold text-slate-700">No Announcements Posted</p>
+                <p className="text-[11px] text-slate-400 mt-0.5">The university administration dashboard hasn't published recent notices.</p>
               </div>
-            </div>
+            ) : (
+              /* Map Array Elements directly pulled from Supabase Storage Tables */
+              <div className="space-y-3">
+                {announcements.map((item) => (
+                  <div key={item.id} className="bg-white p-4 rounded-xl border border-slate-200 space-y-2 transition-all hover:border-slate-300">
+                    <div className="flex justify-between items-start gap-4">
+                      <span className="bg-emerald-50 text-emerald-600 border border-emerald-100 font-black text-[9px] px-2 py-0.5 rounded-md uppercase tracking-wider">
+                        {item.category || 'General Advisory'}
+                      </span>
+                      <div className="flex items-center gap-1.5 text-[10px] text-slate-400 font-medium">
+                        <Clock className="h-3 w-3" /> {formatTime(item.created_at)}
+                      </div>
+                    </div>
+                    <h3 className="text-xs font-bold text-slate-800">{item.title}</h3>
+                    <p className="text-xs text-slate-500 leading-relaxed whitespace-pre-wrap">
+                      {item.content}
+                    </p>
+                    <div className="pt-1 flex items-center gap-1 text-[10px] text-slate-400 font-semibold">
+                      <User className="h-3 w-3 text-slate-400" /> {item.publisher || 'University Student Government'}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* ABOUT US PANEL VIEW */}
@@ -100,7 +140,7 @@ export default function StudentPortal({
           </div>
         </div>
 
-        {/* ================= RIGHT / SIDEBAR PUBLIC CHANNELS (REPLACED LOGIN) ================= */}
+        {/* ================= RIGHT / SIDEBAR PUBLIC CHANNELS ================= */}
         <div className="lg:col-span-1 space-y-4">
           
           {/* USG HELPDESK DIRECTORY */}
@@ -139,7 +179,7 @@ export default function StudentPortal({
                 <ExternalLink className="h-3 w-3 text-slate-400 group-hover:text-slate-600 transition-colors" />
               </a>
               <a 
-               href="https://beta.csucc.edu.ph" 
+                href="https://beta.csucc.edu.ph" 
                 target="_blank" 
                 rel="noreferrer" 
                 className="flex items-center justify-between p-2.5 rounded-xl border border-slate-100 hover:border-slate-200 bg-slate-50/50 hover:bg-slate-50 transition text-xs text-slate-700 font-medium group"
