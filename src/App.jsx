@@ -6,7 +6,6 @@ import usgLogo from './FB_IMG_1781228236447.jpg'
 import { AppRouter, routes } from './router'
 
 // Shared Structural Interface Layout Components
-import LoginGateway from './features/LoginGateway'
 import Sidebar from './features/Sidebar'
 
 // UI Layout Blueprint Presentation Icons
@@ -71,7 +70,7 @@ export default function App() {
         setIsPublicObserver(false)
         fetchUserProfile(session.user.id)
       } else {
-        if (!isPublicObserver) setAppLoading(false)
+        setAppLoading(false)
       }
     })
 
@@ -82,14 +81,12 @@ export default function App() {
         fetchUserProfile(session.user.id)
       } else {
         setSession(null)
-        if (!isPublicObserver) {
-          setUserRole('student')
-          setAppLoading(false)
-        }
+        setUserRole('student')
+        setAppLoading(false)
       }
     })
     return () => subscription.unsubscribe()
-  }, [isPublicObserver])
+  }, [])
 
   async function fetchUserProfile(userId) {
     try {
@@ -125,16 +122,9 @@ export default function App() {
         : error.message
       )
       setAuthProcessing(false)
+    } else {
+      setAuthProcessing(false)
     }
-  }
-
-  const handlePublicAccess = () => {
-    setAppLoading(true)
-    setSession(null)
-    setIsPublicObserver(true)
-    setUserRole('student') 
-    setActiveTab('dashboard')
-    setAppLoading(false)
   }
 
   const handleLogout = async () => {
@@ -166,10 +156,17 @@ export default function App() {
     systemTime,
     setActiveTab,
     triggerCacheFlush,
-    isRefreshing
+    isRefreshing,
+    email,
+    setEmail,
+    password,
+    setPassword,
+    loginError,
+    authProcessing,
+    handleLoginSubmit
   }
 
-  // Filter menu items dynamically: Show the navigation items only when a session is active.
+  // Filter menu items dynamically: Show navigation items only when a session is active.
   const menuItems = session 
     ? [
         { id: 'dashboard', label: 'Dashboard', icon: Layers },
@@ -187,16 +184,6 @@ export default function App() {
         <Sparkles className="h-6 w-6 text-emerald-500 animate-spin" />
         Securing Institutional Keychains...
       </div>
-    )
-  }
-
-  if (!session && !isPublicObserver) {
-    return (
-      <LoginGateway
-        email={email} setEmail={setEmail} password={password} setPassword={setPassword}
-        loginError={loginError} authProcessing={authProcessing}
-        handleLoginSubmit={handleLoginSubmit} handlePublicAccess={handlePublicAccess} usgLogo={usgLogo}
-      />
     )
   }
 
@@ -237,9 +224,11 @@ export default function App() {
               <UserCheck className="h-3.5 w-3.5 text-emerald-600" />
               <span className="text-[9px] md:text-[10px] font-black uppercase text-slate-700 tracking-wider">{getRoleHeaderLabel()}</span>
             </div>
-            <button onClick={handleLogout} className="text-slate-400 hover:text-rose-600 text-[9px] md:text-[10px] font-black uppercase tracking-wider transition-colors flex items-center gap-1 pr-2 pl-1 cursor-pointer">
-              <LogOut className="h-3 w-3" /> <span className="hidden xs:inline">Exit Terminal</span>
-            </button>
+            {session && (
+              <button onClick={handleLogout} className="text-slate-400 hover:text-rose-600 text-[9px] md:text-[10px] font-black uppercase tracking-wider transition-colors flex items-center gap-1 pr-2 pl-1 cursor-pointer">
+                <LogOut className="h-3 w-3" /> <span className="hidden xs:inline">Exit Terminal</span>
+              </button>
+            )}
           </div>
         </div>
       </header>
