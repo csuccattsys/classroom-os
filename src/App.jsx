@@ -194,6 +194,8 @@ export default function App() {
       {/* UNIVERSAL CORE APP HEADER CONTAINER */}
       <header className="bg-white border-b border-slate-200/80 px-4 md:px-6 py-4 sticky top-0 z-50 backdrop-blur-md bg-white/90">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
+          
+          {/* LEFT PORTION: BRANDING AND BRAND SYMBOL */}
           <div className="flex items-center gap-2 md:gap-3">
             <button 
               onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -211,29 +213,35 @@ export default function App() {
             </div>
           </div>
 
-          {/* DYNAMIC UTILITY INTERACTION NAVIGATION CHANNEL */}
-          <div className="flex items-center gap-4 text-[11px] font-bold uppercase tracking-wider text-slate-600 mr-4">
-            {!session && (
+          {/* RIGHT PORTION: INTEGRATED STATUS IDENTITY CONTROL CARD */}
+          <div className="flex items-center gap-2 bg-slate-100/70 p-1.5 rounded-xl border border-slate-200/60 shadow-inner">
+            <div className="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-lg border border-slate-200/40 shadow-xs">
+              <UserCheck className="h-3.5 w-3.5 text-emerald-600" />
+              <span className="text-[9px] md:text-[10px] font-black uppercase text-slate-700 tracking-wider">
+                {getRoleHeaderLabel()}
+              </span>
+            </div>
+            
+            {/* Dynamic Interactive Action Option depending on validation session */}
+            {!session ? (
               <button 
                 onClick={() => setIsLoginModalOpen(true)} 
-                className="flex items-center gap-1.5 text-emerald-700 hover:text-emerald-600 bg-emerald-50 hover:bg-emerald-100/70 border border-emerald-200/60 px-3 py-1.5 rounded-xl transition font-black cursor-pointer shadow-xs"
+                className="flex items-center gap-1 text-emerald-700 hover:text-white bg-emerald-50 hover:bg-emerald-600 border border-emerald-200/80 px-3 py-1.5 rounded-lg transition-all duration-200 text-[9px] md:text-[10px] font-black uppercase tracking-wider cursor-pointer shadow-xs"
               >
-                <LogIn className="h-3.5 w-3.5" /> Log In
+                <LogIn className="h-3 w-3" /> 
+                <span>Portal Log In</span>
+              </button>
+            ) : (
+              <button 
+                onClick={handleLogout} 
+                className="text-slate-500 hover:text-rose-600 hover:bg-rose-50 px-3 py-1.5 rounded-lg text-[9px] md:text-[10px] font-black uppercase tracking-wider transition-all duration-200 flex items-center gap-1 cursor-pointer"
+              >
+                <LogOut className="h-3 w-3" /> 
+                <span className="hidden xs:inline">Exit</span>
               </button>
             )}
           </div>
 
-          <div className="flex items-center gap-2 md:gap-3 bg-slate-50 p-1 rounded-xl border border-slate-200/50">
-            <div className="flex items-center gap-1.5 bg-white px-2.5 py-1.5 rounded-lg border border-slate-100 shadow-xs">
-              <UserCheck className="h-3.5 w-3.5 text-emerald-600" />
-              <span className="text-[9px] md:text-[10px] font-black uppercase text-slate-700 tracking-wider">{getRoleHeaderLabel()}</span>
-            </div>
-            {session && (
-              <button onClick={handleLogout} className="text-slate-400 hover:text-rose-600 text-[9px] md:text-[10px] font-black uppercase tracking-wider transition-colors flex items-center gap-1 pr-2 pl-1 cursor-pointer">
-                <LogOut className="h-3 w-3" /> <span className="hidden xs:inline">Exit Terminal</span>
-              </button>
-            )}
-          </div>
         </div>
       </header>
 
