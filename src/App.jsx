@@ -2,42 +2,45 @@ import React, { useState, useEffect } from 'react'
 import { supabase } from './supabaseClient'
 import usgLogo from './FB_IMG_1781228236447.jpg'
 
-// Features Feature Imports
-import AttendanceTracker from './features/AttendanceTracker'
-import Announcements from './features/Announcements'
+// Core Modular Router & Routes Registry Imports
+import { AppRouter, routes } from './router'
+
+// Shared Structural Interface Layout Components
 import LoginGateway from './features/LoginGateway'
 import Sidebar from './features/Sidebar'
-import StudentPortal from './features/StudentPortal'
-import ExecutiveDashboard from './features/ExecutiveDashboard' // <-- Newly extracted discrete component!
 
-// UI Blueprint Layout Icons
+// UI Layout Blueprint Presentation Icons
 import { 
-  Layers, Activity, Radio, FileQuestion, BarChart3, Lock, Menu,
+  Layers, Activity, Radio, FileQuestion, BarChart3, Menu,
   LogOut, UserCheck, Sparkles, GraduationCap, User
 } from 'lucide-react'
 
 export default function App() {
+  // Core Security & Identity Context States
   const [session, setSession] = useState(null)
   const [userRole, setUserRole] = useState('student') 
   const [isPublicObserver, setIsPublicObserver] = useState(false) 
   const [appLoading, setAppLoading] = useState(true)
-   
   const [activeTab, setActiveTab] = useState('dashboard')
+  
+  // Authentication Form Screen Interactions
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loginError, setLoginError] = useState('')
   const [authProcessing, setAuthProcessing] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
-  // System Context Operational hooks
+  // Live Infrastructure Metrics
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [systemTime, setSystemTime] = useState(new Date().toLocaleTimeString())
 
-  // --- NATIVE URL ROUTING SYNC ENGINE ---
+  // --- NATIVE URL HASH SYNC ROUTER ENGINE ---
   useEffect(() => {
     const handleUrlRouting = () => {
       const hash = window.location.hash.replace('#', '')
-      const validTabs = ['dashboard', 'attendance', 'announcements', 'quizzes', 'records']
+      // Derive valid destinations straight from the source of truth config registry
+      const validTabs = routes.map(route => route.id).concat(['quizzes', 'records'])
+      
       if (validTabs.includes(hash)) {
         setActiveTab(hash)
       } else {
@@ -56,13 +59,11 @@ export default function App() {
   }, [activeTab])
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setSystemTime(new Date().toLocaleTimeString())
-    }, 1000)
+    const timer = setInterval(() => setSystemTime(new Date().toLocaleTimeString()), 1000)
     return () => clearInterval(timer)
   }, [])
 
-  // --- IDENTITY & RBAC ACCESS ENGINE ---
+  // --- IDENTITY VALIDATION & SUPABASE RBAC SECURE SIGNATURE SYNC ---
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
@@ -87,7 +88,6 @@ export default function App() {
         }
       }
     })
-
     return () => subscription.unsubscribe()
   }, [isPublicObserver])
 
@@ -149,53 +149,24 @@ export default function App() {
 
   const triggerCacheFlush = () => {
     setIsRefreshing(true)
-    setTimeout(() => {
-      setIsRefreshing(false)
-    }, 900)
+    setTimeout(() => setIsRefreshing(false), 900)
   }
-
-  const isAnyCollegeLSG = ['cba_lsg', 'ceit_lsg', 'citte_lsg', 'cthm_lsg'].includes(userRole)
-
-  // --- DYNAMIC SWITCH ROUTER CONTEXT ---
-  const renderContent = () => {
-    switch (activeTab) {
-      case 'dashboard': 
-        return userRole === 'student' ? (
-          <StudentPortal />
-        ) : (
-          <ExecutiveDashboard 
-            userRole={userRole}
-            session={session}
-            isPublicObserver={isPublicObserver}
-            systemTime={systemTime}
-            setActiveTab={setActiveTab}
-            triggerCacheFlush={triggerCacheFlush}
-            isRefreshing={isRefreshing}
-          />
-        )
-      case 'attendance':
-        if (userRole === 'usg' || isAnyCollegeLSG) return <AttendanceTracker userRole={userRole} />
-        return renderAccessDenied("University Student Government or authorized College LSG Board clearance is required to process college student event logs.")
-      case 'announcements': 
-        return <Announcements userRole={userRole} />
-      default: 
-        return <StudentPortal />
-    }
-  }
-
-  const renderAccessDenied = (message) => (
-    <div className="bg-white rounded-2xl border border-rose-100 p-8 text-center max-w-md mx-auto my-12 shadow-xs">
-      <div className="h-12 w-12 bg-rose-50 text-rose-600 rounded-full flex items-center justify-center mx-auto mb-4 border border-rose-100"><Lock className="h-5 w-5" /></div>
-      <h3 className="text-xs font-black uppercase text-slate-900 tracking-tight">Clearance Check Failed</h3>
-      <p className="text-xs text-slate-500 mt-2 leading-relaxed">{message}</p>
-      <button onClick={() => setActiveTab('dashboard')} className="mt-5 text-xs font-black uppercase tracking-wider text-emerald-600 hover:text-emerald-700 transition">Return to Dashboard</button>
-    </div>
-  )
 
   const getRoleHeaderLabel = () => {
     if (userRole === 'student') return 'Student Observer'
     if (userRole === 'usg') return 'USG Executive'
     return 'Council Board Admin'
+  }
+
+  // Packaged properties payload object to dynamically pass down to router components
+  const forwardProps = {
+    userRole,
+    session,
+    isPublicObserver,
+    systemTime,
+    setActiveTab,
+    triggerCacheFlush,
+    isRefreshing
   }
 
   const menuItems = [
@@ -206,6 +177,7 @@ export default function App() {
     { id: 'records', label: 'Legislative Audit Ledger', icon: BarChart3, locked: true },
   ]
 
+  // --- RENDERING ROUTINES (Guards & Shells) ---
   if (appLoading) {
     return (
       <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center text-slate-400 text-xs font-bold gap-3 tracking-widest uppercase">
@@ -218,22 +190,16 @@ export default function App() {
   if (!session && !isPublicObserver) {
     return (
       <LoginGateway
-        email={email}
-        setEmail={setEmail}
-        password={password}
-        setPassword={setPassword}
-        loginError={loginError}
-        authProcessing={authProcessing}
-        handleLoginSubmit={handleLoginSubmit}
-        handlePublicAccess={handlePublicAccess}
-        usgLogo={usgLogo}
+        email={email} setEmail={setEmail} password={password} setPassword={setPassword}
+        loginError={loginError} authProcessing={authProcessing}
+        handleLoginSubmit={handleLoginSubmit} handlePublicAccess={handlePublicAccess} usgLogo={usgLogo}
       />
     )
   }
 
   return (
     <div className="min-h-screen bg-white flex flex-col font-sans antialiased text-slate-900 selection:bg-emerald-600 selection:text-white">
-      {/* UNIVERSAL CORE APP HEADER */}
+      {/* UNIVERSAL CORE APP HEADER CONTAINER */}
       <header className="bg-white border-b border-slate-200/80 px-4 md:px-6 py-4 sticky top-0 z-50 backdrop-blur-md bg-white/90">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
           <div className="flex items-center gap-2 md:gap-3">
@@ -275,16 +241,15 @@ export default function App() {
         </div>
       </header>
 
-      {/* SYSTEM BROADCAST NEWS FLASH */}
+      {/* MARQUEE GLOBAL SYSTEM BULLETIN BANNER */}
       <div className="bg-emerald-900 text-white py-1.5 px-4 overflow-hidden relative border-b border-emerald-950 flex items-center text-[10px] font-semibold tracking-wide">
         <span className="bg-emerald-600 text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md mr-3 shadow-xs shrink-0 z-10">BULLETIN</span>
         <div className="animate-marquee whitespace-nowrap loop-scroll flex gap-8">
           <span>Welcome to the CSUCC Governance Portal. Ensure all event access attendance sheets are securely filed under correct RBAC rules.</span>
-          <span className="hidden md:inline text-emerald-300">• System Sync Status Operational</span>
         </div>
       </div>
 
-      {/* SCREEN ORIENTATION WRAPPER */}
+      {/* SCREEN PANELS ORIENTATION WRAPPER */}
       <div className="flex-1 flex min-h-0 relative">
         <Sidebar 
           menuItems={menuItems} 
@@ -297,7 +262,12 @@ export default function App() {
          
         <main className="flex-1 p-4 md:p-8 min-w-0 overflow-y-auto bg-white">
           <div className="max-w-5xl mx-auto">
-            {renderContent()}
+            {/* CENTRALIZED ROUTER COMPONENT: Swaps content and applies access-control dynamically */}
+            <AppRouter 
+              activeTab={activeTab}
+              setActiveTab={setActiveTab}
+              routeProps={forwardProps}
+            />
           </div>
         </main>
       </div>
