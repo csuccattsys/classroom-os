@@ -23,11 +23,11 @@ export default function StudentPortal({
       {/* 1. STUDENT WELCOME HERO */}
       <div className="bg-gradient-to-r from-slate-900 to-emerald-950 rounded-2xl p-6 text-white border border-slate-800 shadow-lg">
         <span className="bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-md">
-          Student Body Node
+          Student View
         </span>
         <h2 className="text-xl font-black tracking-tight pt-3">Welcome to the Student Portal</h2>
         <p className="text-xs text-slate-400 mt-1 max-w-md">
-          Access campus public announcements, verify your event attendance ledgers, and participate in active student polling.
+          Access campus public announcements, verify your event attendance, and participate in active student polling.
         </p>
       </div>
 
@@ -45,7 +45,7 @@ export default function StudentPortal({
                 <div className="flex items-center gap-2 text-slate-800 font-bold text-xs uppercase tracking-wider mb-2">
                   <CheckCircle className="h-4 w-4 text-emerald-600" /> My Attendance History
                 </div>
-                <p className="text-xs text-slate-500 mb-4">View your officially logged attendance points for university events.</p>
+                <p className="text-xs text-slate-500 mb-4">View your officially logged attendance for university events.</p>
                 <div className="bg-white p-4 rounded-xl border border-slate-200 text-center text-xs text-slate-400 font-medium">
                   No recent event logs found for this session.
                 </div>
@@ -80,7 +80,7 @@ export default function StudentPortal({
                 </p>
               </div>
               <div className="border-t border-slate-200/60 pt-4 flex justify-between items-center text-[10px] text-slate-400 font-mono">
-                <span>Governance Engine v2.0.0 (Stable Node)</span>
+                <span>USG Portal v1.0.0</span>
                 <span className="text-emerald-600 font-bold">Secure SSL Link Enabled</span>
               </div>
             </div>
@@ -123,13 +123,13 @@ export default function StudentPortal({
                 </div>
                 <h3 className="text-xs font-black uppercase tracking-wider text-slate-200">Executive Login</h3>
                 <p className="text-[11px] text-slate-400 leading-relaxed">
-                  USG Officers and LSG Council Board members can verify administrative clearance keys here.
+                  USG Officers and LSG members can verify administrative clearance here.
                 </p>
               </div>
 
               <form onSubmit={handleLoginSubmit} className="space-y-3">
                 <div className="space-y-1">
-                  <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block">Clearance Email</label>
+                  <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block">User Email</label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-2.5 h-3.5 w-3.5 text-slate-500" />
                     <input 
@@ -137,14 +137,14 @@ export default function StudentPortal({
                       required 
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      placeholder="name@csu.edu.ph" 
+                      placeholder="name@csucc.edu.ph" 
                       className="w-full bg-slate-950/60 border border-slate-800 rounded-xl py-2 pl-9 pr-4 text-xs font-medium text-slate-200 placeholder:text-slate-600 focus:outline-hidden focus:border-emerald-500 transition-colors"
                     />
                   </div>
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block">Encryption Access Key</label>
+                  <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block">User Password</label>
                   <div className="relative">
                     <KeyRound className="absolute left-3 top-2.5 h-3.5 w-3.5 text-slate-500" />
                     <input 
@@ -176,14 +176,14 @@ export default function StudentPortal({
                       Validating Secure Node...
                     </>
                   ) : (
-                    'Verify Terminal Clearance'
+                    'Enter Portal'
                   )}
                 </button>
               </form>
             </div>
           ) : (
             <div className="bg-emerald-950/30 border border-emerald-900/30 text-emerald-400 rounded-2xl p-5 text-center text-xs font-bold space-y-1 animate-fade-in">
-              <p>✓ Secure Administrative Node Engaged</p>
+              <p></p>
               <p className="text-[10px] text-slate-400 font-normal">Use the application sidebar panel menu to switch to restricted officer tools.</p>
             </div>
           )}
