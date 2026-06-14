@@ -10,6 +10,9 @@ export default function StudentPortal({ session }) {
   const [unreadCount, setUnreadCount] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
 
+  // New state added exclusively to support the phone-style popup toast banner
+  const [activeToast, setActiveToast] = useState(null)
+
   useEffect(() => {
     // Request permission for desktop push notifications on system mount
     if (typeof window !== 'undefined' && 'Notification' in window) {
@@ -66,6 +69,18 @@ export default function StudentPortal({ session }) {
             // Increment local unread visual badge count
             setUnreadCount((prev) => prev + 1)
 
+            // Trigger the custom mobile-style slide down banner inside the view
+            setActiveToast({
+              title: payload.new.title,
+              content: payload.new.content,
+              publisher: payload.new.publisher || 'USG Admin'
+            })
+
+            // Automatically hide the slide down banner after 5 seconds
+            setTimeout(() => {
+              setActiveToast(null)
+            }, 5000)
+
             // Trigger Native Browser Desktop Banner Alert Notification
             if (Notification.permission === 'granted') {
               new Notification(`📢 New USG Broadcast: ${payload.new.title}`, {
@@ -112,8 +127,25 @@ export default function StudentPortal({ session }) {
   }
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6 animate-fade-in relative">
       
+      {/* ================= SMARTPHONE-STYLE FLOATING POPUP NOTIFICATION BANNER ================= */}
+      {activeToast && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[9999] w-11/12 max-w-md bg-slate-900/95 backdrop-blur-md border border-slate-800 text-white p-4 rounded-2xl shadow-2xl flex gap-3 animate-slide-down transition-all duration-300">
+          <div className="h-9 w-9 bg-emerald-500/10 text-emerald-400 rounded-xl flex items-center justify-center shrink-0 border border-emerald-500/20">
+            <Megaphone className="h-4 w-4" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex justify-between items-center">
+              <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">{activeToast.publisher}</span>
+              <span className="text-[9px] text-slate-500 font-medium">Just Now</span>
+            </div>
+            <h4 className="text-xs font-bold text-slate-100 truncate mt-0.5">{activeToast.title}</h4>
+            <p className="text-[11px] text-slate-400 line-clamp-2 mt-0.5 leading-normal">{activeToast.content}</p>
+          </div>
+        </div>
+      )}
+
       {/* 1. STUDENT WELCOME HERO WITH INTEGRATED DYNAMIC BELL BADGE */}
       <div className="bg-gradient-to-r from-slate-900 to-emerald-950 rounded-2xl p-6 text-white border border-slate-800 shadow-lg flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
