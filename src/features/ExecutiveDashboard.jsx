@@ -4,10 +4,12 @@ import {
   Zap, RefreshCw, ShieldAlert, TrendingUp, Building2, Clock, 
   Users, Activity, Radio, ChevronRight 
 } from 'lucide-react'
-import { 
+
+// --- EXTRACT COMPONENTS FROM CDN GLOBAL BROWSER WINDOW OBJECT ---
+const { 
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, 
   Tooltip, CartesianGrid, BarChart, Bar, Legend 
-} from 'recharts'
+} = window.Recharts || {}
 
 export default function ExecutiveDashboard({ 
   userRole, 
@@ -136,6 +138,15 @@ export default function ExecutiveDashboard({
       fetchLiveTelemetry()
     }
   }, [isRefreshing])
+
+  // Safety network check to make sure CDN scripts are fully compiled by the browser
+  if (!window.Recharts) {
+    return (
+      <div className="p-6 text-xs font-mono font-bold text-slate-500 bg-slate-50 border border-slate-200/60 rounded-2xl animate-pulse">
+        Initializing Real-Time Dashboard Analytics Engine...
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6 animate-fade-in">
