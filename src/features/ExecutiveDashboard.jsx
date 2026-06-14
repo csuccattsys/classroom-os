@@ -5,12 +5,6 @@ import {
   Users, Activity, Radio, ChevronRight 
 } from 'lucide-react'
 
-// --- EXTRACT COMPONENTS FROM CDN GLOBAL BROWSER WINDOW OBJECT ---
-const { 
-  ResponsiveContainer, AreaChart, Area, XAxis, YAxis, 
-  Tooltip, CartesianGrid, BarChart, Bar, Legend 
-} = window.Recharts || {}
-
 export default function ExecutiveDashboard({ 
   userRole, 
   session, 
@@ -29,6 +23,7 @@ export default function ExecutiveDashboard({
   const [timelineData, setTimelineData] = useState([])
   const [councilActivityData, setCouncilActivityData] = useState([])
   const [loadingMetrics, setLoadingMetrics] = useState(true)
+  const [chartsReady, setChartsReady] = useState(false)
 
   // Determine active badge design properties
   const getRoleBadgeDetails = () => {
@@ -115,9 +110,25 @@ export default function ExecutiveDashboard({
     }
   }
 
-  // --- ATTACH REAL-TIME RE-SYNC LISTENERS ---
+  // --- ATTACH REAL-TIME RE-SYNC LISTENERS & AUTO SCRIPT LOADING ---
   useEffect(() => {
     fetchLiveTelemetry()
+
+    // Setup fallback runtime script checker to pull charts into view automatically
+    const checkChartsExist = () => {
+      if (window.Recharts) {
+        setChartsReady(true)
+      } else {
+        // If script hasn't loaded yet, fetch it manually using an inline document element
+        const script = document.createElement('script')
+        script.src = "https://unpkg.com/recharts/umd/Recharts.min.js"
+        script.async = true;
+        script.onload = () => setChartsReady(true)
+        document.head.appendChild(script)
+      }
+    }
+    
+    checkChartsExist()
 
     // Listen live to any database changes in the attendance table
     const attendanceSubscription = supabase
@@ -139,14 +150,11 @@ export default function ExecutiveDashboard({
     }
   }, [isRefreshing])
 
-  // Safety network check to make sure CDN scripts are fully compiled by the browser
-  if (!window.Recharts) {
-    return (
-      <div className="p-6 text-xs font-mono font-bold text-slate-500 bg-slate-50 border border-slate-200/60 rounded-2xl animate-pulse">
-        Initializing Real-Time Dashboard Analytics Engine...
-      </div>
-    )
-  }
+  // Extract variables out dynamically only if window object validates
+  const { 
+    ResponsiveContainer, AreaChart, Area, XAxis, YAxis, 
+    Tooltip, CartesianGrid, BarChart, Bar, Legend 
+  } = window.Recharts || {}
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -248,22 +256,26 @@ export default function ExecutiveDashboard({
             <h4 className="text-xs font-black uppercase text-slate-900 tracking-wider">Gate Access Timeline Trend</h4>
             <p className="text-[11px] text-slate-400">Real-time student voter authentication checkins sorted chronologically</p>
           </div>
-          <div className="h-64 w-full text-[10px] font-semibold">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={timelineData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="colorVoters" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.2}/>
-                    <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                <XAxis dataKey="time" stroke="#94a3b8" />
-                <YAxis stroke="#94a3b8" />
-                <Tooltip contentStyle={{ background: '#0f172a', borderRadius: '12px', color: '#fff', fontSize: '11px', border: 'none' }} />
-                <Area type="monotone" dataKey="voters" name="Active Check-ins" stroke="#10b981" strokeWidth={2} fillOpacity={1} fill="url(#colorVoters)" />
-              </AreaChart>
-            </ResponsiveContainer>
+          <div className="h-64 w-full text-[10px] font-semibold flex items-center justify-center">
+            {chartsReady && ResponsiveContainer ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={timelineData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="colorVoters" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.2}/>
+                      <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                  <XAxis dataKey="time" stroke="#94a3b8" />
+                  <YAxis stroke="#94a3b8" />
+                  <Tooltip contentStyle={{ background: '#0f172a', borderRadius: '12px', color: '#fff', fontSize: '11px', border: 'none' }} />
+                  <Area type="monotone" dataKey="voters" name="Active Check-ins" stroke="#10b981" strokeWidth={2} fillOpacity={1} fill="url(#colorVoters)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            ) : (
+              <p className="text-slate-400 font-mono text-[11px] animate-pulse">Assembling Vector Map Component Layout...</p>
+            )}
           </div>
         </div>
 
@@ -273,18 +285,22 @@ export default function ExecutiveDashboard({
             <h4 className="text-xs font-black uppercase text-slate-900 tracking-wider">Turnout Metrification by College</h4>
             <p className="text-[11px] text-slate-400">Comparing verified profile attendance volumes against institutional targets</p>
           </div>
-          <div className="h-64 w-full text-[10px] font-semibold">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={councilActivityData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                <XAxis dataKey="name" stroke="#94a3b8" />
-                <YAxis stroke="#94a3b8" />
-                <Tooltip contentStyle={{ background: '#0f172a', borderRadius: '12px', color: '#fff', fontSize: '11px', border: 'none' }} />
-                <Legend iconSize={8} wrapperStyle={{ pt: 10 }} />
-                <Bar dataKey="Attendance" fill="#6366f1" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="Target" fill="#cbd5e1" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+          <div className="h-64 w-full text-[10px] font-semibold flex items-center justify-center">
+            {chartsReady && ResponsiveContainer ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={councilActivityData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                  <XAxis dataKey="name" stroke="#94a3b8" />
+                  <YAxis stroke="#94a3b8" />
+                  <Tooltip contentStyle={{ background: '#0f172a', borderRadius: '12px', color: '#fff', fontSize: '11px', border: 'none' }} />
+                  <Legend iconSize={8} wrapperStyle={{ pt: 10 }} />
+                  <Bar dataKey="Attendance" fill="#6366f1" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="Target" fill="#cbd5e1" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <p className="text-slate-400 font-mono text-[11px] animate-pulse">Assembling Metric Bar Component Layout...</p>
+            )}
           </div>
         </div>
 
