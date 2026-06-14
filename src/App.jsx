@@ -11,7 +11,7 @@ import Sidebar from './features/Sidebar'
 // UI Layout Blueprint Presentation Icons
 import { 
   Layers, Activity, Radio, FileQuestion, BarChart3, Menu,
-  LogOut, UserCheck, Sparkles, LogIn, X, Mail, KeyRound, AlertCircle, Loader2
+  LogOut, UserCheck, Sparkles, LogIn, X, Mail, KeyRound, AlertCircle, Loader2, Megaphone
 } from 'lucide-react'
 
 export default function App() {
@@ -33,6 +33,39 @@ export default function App() {
   // Live Infrastructure Metrics
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [systemTime, setSystemTime] = useState(new Date().toLocaleTimeString())
+
+  // New state added exclusively to support the global application smartphone popup toast
+  const [activeToast, setActiveToast] = useState(null)
+
+  // --- GLOBAL REAL-TIME APPLICATION NOTIFICATION LIFECYCLE ---
+  useEffect(() => {
+    const globalNotificationsChannel = supabase
+      .channel('global:announcements')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'announcements' },
+        (payload) => {
+          if (!payload?.new) return
+
+          // Trigger our smartphone-style floating popup toast globally
+          setActiveToast({
+            title: payload.new.title,
+            content: payload.new.content,
+            publisher: payload.new.publisher || 'USG Admin'
+          })
+
+          // Automatically slide it back out of view after 5 seconds
+          setTimeout(() => {
+            setActiveToast(null)
+          }, 5000)
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(globalNotificationsChannel)
+    }
+  }, [])
 
   // --- NATIVE URL HASH SYNC ROUTER ENGINE ---
   useEffect(() => {
@@ -190,7 +223,25 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-white flex flex-col font-sans antialiased text-slate-900 selection:bg-emerald-600 selection:text-white">
+    <div className="min-h-screen bg-white flex flex-col font-sans antialiased text-slate-900 selection:bg-emerald-600 selection:text-white relative">
+      
+      {/* ================= GLOBAL APPLICATION SMARTPHONE NOTIFICATION ================= */}
+      {activeToast && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[99999] w-11/12 max-w-md bg-slate-900/95 backdrop-blur-md border border-slate-800 text-white p-4 rounded-2xl shadow-2xl flex gap-3 animate-slide-down transition-all duration-300">
+          <div className="h-9 w-9 bg-emerald-500/10 text-emerald-400 rounded-xl flex items-center justify-center shrink-0 border border-emerald-500/20">
+            <Megaphone className="h-4 w-4" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex justify-between items-center">
+              <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">{activeToast.publisher}</span>
+              <span className="text-[9px] text-slate-500 font-medium">Just Now</span>
+            </div>
+            <h4 className="text-xs font-bold text-slate-100 truncate mt-0.5">{activeToast.title}</h4>
+            <p className="text-[11px] text-slate-400 line-clamp-2 mt-0.5 leading-normal">{activeToast.content}</p>
+          </div>
+        </div>
+      )}
+
       {/* UNIVERSAL CORE APP HEADER CONTAINER */}
       <header className="bg-white border-b border-slate-200/80 px-4 md:px-6 py-4 sticky top-0 z-50 backdrop-blur-md bg-white/90">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
