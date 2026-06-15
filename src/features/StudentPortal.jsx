@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react'
 import { 
   Calendar, CheckCircle, Info, Globe, Megaphone, Clock, User, 
   HelpCircle, Link, Phone, Mail, ExternalLink, Loader2, Bell, MapPin,
-  Users, Building2, ShieldCheck, Bookmark, Scale, FileText, HeartHandshake, Award
+  Users, Building2, ShieldCheck, Bookmark, Scale, FileText, HeartHandshake, Award,
+  ChevronDown, Crown, Star
 } from 'lucide-react'
 import { supabase } from '../supabaseClient' 
 
@@ -14,30 +15,40 @@ export default function StudentPortal({ session }) {
   // Tab state for the structural organizational registry tree
   const [activeTab, setActiveTab] = useState('executive')
   
-  // Interactive Directory active section state (References structural block from image_bd29a6.png)
+  // Interactive Directory active section state
   const [activeSection, setActiveSection] = useState('about_usg')
 
   // Official USG Organizational Registry Data Map with current officers
   const structureData = {
     executive: {
+      title: "Executive Committee Branch",
+      description: "Primary administrative and policy enforcement assembly of the University Student Government.",
       leader: { 
         name: "Davie P. Sialongo", 
-        role: "President, CSUCC USG",
+        role: "President",
+        subRole: "CSUCC USG",
         program: "BTLED - HE"
       },
       officers: [
-        { name: "Darius Noel Q. Madiclum", role: "Vice President, CSUCC USG", program: "BTLED - IA" },
-        { name: "Jowee Allen B. Bajaro", role: "Executive Secretary, CSUCC USG", program: "BTLED - HE" },
-        { name: "Ai Mae P. Arcenas", role: "Secretary, CSUCC USG", program: "BTLED - IA" }
+        { name: "Darius Noel Q. Madiclum", role: "Vice President", subRole: "CSUCC USG", program: "BTLED - IA" },
+        { name: "Jowee Allen B. Bajaro", role: "Executive Secretary", subRole: "CSUCC USG", program: "BTLED - HE" },
+        { name: "Ai Mae P. Arcenas", role: "Secretary", subRole: "CSUCC USG", program: "BTLED - IA" }
       ]
     },
     lowerhouse: {
-      leader: { name: "Speaker of the Council", role: "LSG House Chairperson", program: "Governance Node" },
+      title: "Legislative Council Representative Assembly",
+      description: "Departmental representation units operating under autonomous college councils.",
+      leader: { 
+        name: "Speaker of the Council", 
+        role: "House Chairperson", 
+        subRole: "LSG Legislature",
+        program: "Governance Node" 
+      },
       officers: [
-        { name: "CBA Representative", role: "LSG Representative Node", program: "CBA Council" },
-        { name: "CEIT Representative", role: "LSG Representative Node", program: "CEIT Council" },
-        { name: "CITTE Representative", role: "LSG Representative Node", program: "CITTE Council" },
-        { name: "CTHM Representative", role: "LSG Representative Node", program: "CTHM Council" }
+        { name: "CBA Representative", role: "Representative Node", subRole: "CBA Council", program: "CBA Council" },
+        { name: "CEIT Representative", role: "Representative Node", subRole: "CEIT Council", program: "CEIT Council" },
+        { name: "CITTE Representative", role: "Representative Node", subRole: "CITTE Council", program: "CITTE Council" },
+        { name: "CTHM Representative", role: "Representative Node", subRole: "CTHM Council", program: "CTHM Council" }
       ]
     }
   }
@@ -146,7 +157,7 @@ export default function StudentPortal({ session }) {
         <div className="absolute -right-16 -top-16 w-44 h-44 bg-emerald-500/10 rounded-full blur-3xl transform group-hover:scale-125 transition-transform duration-700 pointer-events-none" />
         
         <div className="transform transition-all duration-300 hover:translate-x-1">
-          <span className="bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-md tracking-wider inline-block animate-pulse">
+          <span className="bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-md inline-block animate-pulse">
             Student View
           </span>
           <h2 className="text-xl font-black tracking-tight pt-3">Welcome to the Student Portal</h2>
@@ -169,7 +180,7 @@ export default function StudentPortal({ session }) {
         </button>
       </div>
 
-      {/* ================= 2. INTERACTIVE EXPANDED DIRECTORY (Based on image_bd29a6.png) ================= */}
+      {/* ================= 2. INTERACTIVE EXPANDED DIRECTORY (RESTRUCTURED TREE) ================= */}
       <div className="animate-fade-in-up grid grid-cols-1 lg:grid-cols-4 gap-6 items-start" style={{ animationDelay: '100ms' }}>
         
         {/* LEFT COLUMN: THE EXPANDED OFFICE DIRECTORY PANEL */}
@@ -240,10 +251,10 @@ export default function StudentPortal({ session }) {
           </div>
         </div>
 
-        {/* RIGHT COLUMN: DYNAMIC CONTENT CANVAS REPLACING ADJACENT PREVIEW BOX */}
-        <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-5 lg:col-span-3 min-h-[440px] flex flex-col justify-between transition-all duration-300 hover:shadow-md">
+        {/* RIGHT COLUMN: RESTRUCTURED MAIN HIERARCHY BOX */}
+        <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-5 lg:col-span-3 min-h-[500px] flex flex-col justify-between transition-all duration-300 hover:shadow-md">
           
-          <div className="space-y-4 my-auto">
+          <div className="space-y-4">
             {activeSection === 'about_usg' && (
               <div className="space-y-3">
                 <div className="flex items-center gap-2 text-slate-800 font-black text-sm uppercase tracking-wider">
@@ -360,45 +371,89 @@ export default function StudentPortal({ session }) {
             )}
           </div>
 
-          {/* LOWER LIVE ROSTER VIEW SWITCHER */}
-          <div className="border-t border-slate-100 pt-3 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-            <div className="text-[10px] text-slate-400 font-mono">
-              Viewing Roster Hierarchy Base:
+          {/* LOWER TREE VISUAL DISPLAY FRAME */}
+          <div className="mt-6 border-t border-slate-100 pt-5 space-y-5">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+              <div>
+                <h4 className="text-xs font-bold text-slate-800">{currentGroup.title}</h4>
+                <p className="text-[11px] text-slate-400 mt-0.5">{currentGroup.description}</p>
+              </div>
+              
+              <div className="flex gap-1.5 bg-slate-100 p-1 rounded-xl shadow-inner border border-slate-200/60 shrink-0">
+                <button
+                  onClick={() => setActiveTab('executive')}
+                  className={`px-3 py-1.5 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all duration-300 ${
+                    activeTab === 'executive' 
+                      ? 'bg-slate-900 text-white shadow-sm' 
+                      : 'text-slate-500 hover:text-slate-900 hover:bg-slate-200/50'
+                  }`}
+                >
+                  Executive Tree
+                </button>
+                <button
+                  onClick={() => setActiveTab('lowerhouse')}
+                  className={`px-3 py-1.5 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all duration-300 ${
+                    activeTab === 'lowerhouse' 
+                      ? 'bg-slate-900 text-white shadow-sm' 
+                      : 'text-slate-500 hover:text-slate-900 hover:bg-slate-200/50'
+                  }`}
+                >
+                  Lowerhouse Tree
+                </button>
+              </div>
             </div>
-            <div className="flex gap-2 bg-slate-100 p-1 rounded-xl shadow-inner">
-              <button
-                onClick={() => setActiveTab('executive')}
-                className={`px-3 py-1.5 text-[10px] font-bold rounded-lg transition-all duration-300 ${
-                  activeTab === 'executive' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-500 hover:text-slate-900'
-                }`}
-              >
-                Executive Tree
-              </button>
-              <button
-                onClick={() => setActiveTab('lowerhouse')}
-                className={`px-3 py-1.5 text-[10px] font-bold rounded-lg transition-all duration-300 ${
-                  activeTab === 'lowerhouse' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-500 hover:text-slate-900'
-                }`}
-              >
-                Lowerhouse Tree
-              </button>
-            </div>
-          </div>
 
-          {/* DISPLAY OF TREE STRUCTURAL CANVAS NODE FOR SELECTED TAB */}
-          <div className="flex flex-col items-center justify-center py-4 space-y-4 border-t border-slate-50 mt-3 bg-slate-50/50 rounded-xl p-3">
-            <div className="bg-white border border-slate-200 shadow-xs rounded-xl p-3 w-44 text-center">
-              <h4 className="text-[11px] font-black text-slate-900 tracking-tight">{currentGroup.leader.name}</h4>
-              <p className="text-[9px] text-emerald-700 font-bold uppercase tracking-wider">{currentGroup.leader.role}</p>
-            </div>
-            
-            <div className="flex flex-wrap justify-center gap-2">
-              {currentGroup.officers.map((officer, index) => (
-                <div key={index} className="bg-white border border-slate-200 shadow-xs rounded-xl p-2 w-36 text-center text-[10px]">
-                  <h5 className="font-bold text-slate-800 leading-tight">{officer.name}</h5>
-                  <p className="text-[8px] text-emerald-600 font-medium">{officer.role.replace(', CSUCC USG', '')}</p>
+            {/* PRESENTABLE REGISTRY SYSTEM DEPLOYED TREE VISUAL CANVAS */}
+            <div className="bg-slate-50/80 border border-slate-200/70 rounded-xl p-6 flex flex-col items-center relative overflow-hidden">
+              <div className="absolute inset-0 bg-[linear-gradient(to_right,#e2e8f0_1px,transparent_1px),linear-gradient(to_bottom,#e2e8f0_1px,transparent_1px)] bg-[size:1.5rem_1.5rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)] opacity-35" />
+
+              {/* LEVEL 1: LEADER COMMAND NODE */}
+              <div className="relative z-10 flex flex-col items-center group">
+                <div className="bg-gradient-to-b from-slate-900 to-slate-950 border border-slate-800 text-white shadow-md rounded-xl p-3.5 w-52 text-center transform transition-transform duration-300 hover:-translate-y-0.5">
+                  <div className="mx-auto w-6 h-6 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center mb-1.5 shadow-sm">
+                    <Crown className="h-3.5 w-3.5 animate-pulse" />
+                  </div>
+                  <h4 className="text-xs font-black tracking-tight">{currentGroup.leader.name}</h4>
+                  <div className="mt-1 flex flex-col items-center justify-center">
+                    <span className="text-[9px] text-emerald-400 font-extrabold uppercase tracking-widest">{currentGroup.leader.role}</span>
+                    <span className="text-[8px] text-slate-500 font-medium font-mono px-1.5 py-0.5 bg-slate-900 border border-slate-800 rounded mt-1">{currentGroup.leader.program}</span>
+                  </div>
                 </div>
-              ))}
+
+                {/* HIERARCHICAL STEM DIRECTION INDICATOR */}
+                <div className="w-0.5 h-6 bg-slate-300 relative">
+                  <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-1.5 h-1.5 bg-slate-300 rounded-full" />
+                </div>
+              </div>
+
+              {/* LEVEL 2: LOWER HOVER REPRESENTATIVE TIERS */}
+              <div className="relative w-full z-10 pt-2">
+                {/* Horizontal connection bar spanning the width of secondary units */}
+                <div className="absolute top-0 left-12 right-12 h-0.5 bg-slate-300 rounded" />
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 justify-items-center pt-4">
+                  {currentGroup.officers.map((officer, index) => (
+                    <div key={index} className="relative bg-white border border-slate-200 hover:border-emerald-500/30 shadow-xs hover:shadow-md rounded-xl p-3 w-44 text-center transition-all duration-300 group flex flex-col justify-between items-center">
+                      {/* Vertical line from card up to horizontal axis banner */}
+                      <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 w-0.5 h-4 bg-slate-300" />
+                      
+                      <div className="w-full">
+                        <div className="mx-auto w-5 h-5 rounded-md bg-slate-50 border border-slate-200 text-slate-600 flex items-center justify-center mb-1 group-hover:bg-emerald-50 group-hover:border-emerald-200 group-hover:text-emerald-600 transition-colors">
+                          <Star className="h-3 w-3" />
+                        </div>
+                        <h5 className="text-[11px] font-bold text-slate-800 leading-tight tracking-tight group-hover:text-emerald-950 transition-colors">{officer.name}</h5>
+                        <p className="text-[9px] text-emerald-700 font-bold tracking-wide mt-0.5">{officer.role}</p>
+                        <p className="text-[8px] text-slate-400 font-medium tracking-tight">{officer.subRole}</p>
+                      </div>
+
+                      <div className="mt-2 w-full pt-1.5 border-t border-slate-100 text-[8px] font-mono font-bold text-slate-500 bg-slate-50/50 py-0.5 rounded">
+                        {officer.program}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
             </div>
           </div>
 
@@ -451,7 +506,7 @@ export default function StudentPortal({ session }) {
                     </div>
 
                     {item.image_url && (
-                      <div className="mt-2 rounded-xl overflow-hidden border border-slate-100 bg-slate-50 max-h-72 flex items-center justify-center overflow-hidden">
+                      <div className="mt-2 rounded-xl overflow-hidden border border-slate-100 bg-slate-50 max-h-72 flex items-center justify-center">
                         <img 
                           src={item.image_url} 
                           alt={item.title}
@@ -546,40 +601,21 @@ export default function StudentPortal({ session }) {
               <a 
                 href="https://beta-myschool.csucc.edu.ph" 
                 target="_blank" 
-                rel="noreferrer" 
-                className="flex items-center justify-between p-3 rounded-xl border border-slate-100 bg-gradient-to-r from-emerald-50/20 to-slate-50/40 hover:from-emerald-50/50 hover:to-emerald-50/10 hover:border-emerald-200/60 shadow-xs transition-all duration-300 transform hover:-translate-y-1 hover:shadow-md group"
+                rel="noreferrer"
+                className="flex items-center justify-between p-2.5 rounded-xl border border-slate-100 bg-slate-50/50 hover:bg-emerald-50/40 hover:border-emerald-500/20 text-slate-700 hover:text-emerald-900 transition-all duration-200 group text-xs font-semibold"
               >
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="h-7 w-7 rounded-lg bg-emerald-50 border border-emerald-100 text-emerald-600 flex items-center justify-center font-bold text-xs shrink-0 group-hover:bg-emerald-600 group-hover:text-white group-hover:border-emerald-600 transition-all duration-300">MS</div>
-                  <div className="flex flex-col min-w-0">
-                    <span className="text-xs text-slate-800 font-bold tracking-tight">CSUCC MySchool Portal</span>
-                    <span className="text-[10px] text-slate-400 truncate">Grades, profiles & schedules</span>
-                  </div>
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="h-2 w-2 rounded-full bg-slate-300 group-hover:bg-emerald-500 transition-colors shrink-0" />
+                  <span className="truncate">MySchool Student Portal</span>
                 </div>
-                <ExternalLink className="h-3.5 w-3.5 text-slate-400 group-hover:text-emerald-600 group-hover:translate-x-0.5 transition-all shrink-0" />
-              </a>
-
-              <a 
-                href="https://beta.csucc.edu.ph" 
-                target="_blank" 
-                rel="noreferrer" 
-                className="flex items-center justify-between p-3 rounded-xl border border-slate-100 bg-gradient-to-r from-emerald-50/20 to-slate-50/40 hover:from-emerald-50/50 hover:to-emerald-50/10 hover:border-emerald-200/60 shadow-xs transition-all duration-300 transform hover:-translate-y-1 hover:shadow-md group"
-              >
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="h-7 w-7 rounded-lg bg-emerald-50 border border-emerald-100 text-emerald-600 flex items-center justify-center font-bold text-xs shrink-0 group-hover:bg-emerald-600 group-hover:text-white group-hover:border-emerald-600 transition-all duration-300">WB</div>
-                  <div className="flex flex-col min-w-0">
-                    <span className="text-xs text-slate-800 font-bold tracking-tight">CSUCC School Website</span>
-                    <span className="text-[10px] text-slate-400 truncate">Official campus main page</span>
-                  </div>
-                </div>
-                <ExternalLink className="h-3.5 w-3.5 text-slate-400 group-hover:text-emerald-600 group-hover:translate-x-0.5 transition-all shrink-0" />
+                <ExternalLink className="h-3 w-3 text-slate-300 group-hover:text-emerald-600 transition-colors shrink-0" />
               </a>
             </div>
           </div>
 
         </div>
-
       </div>
+
     </div>
   )
 }
