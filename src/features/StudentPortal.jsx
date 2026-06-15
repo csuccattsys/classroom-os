@@ -265,13 +265,13 @@ export default function StudentPortal({ session }) {
                   <Users className="h-4 w-4 text-emerald-600" /> Local Student Government (LSG)
                 </div>
                 <p className="text-xs text-slate-600 leading-relaxed">
-                  The Local Student Governments act as college-centric representation bodies tailored to handle departmental micro-concerns. Each independent student department operates under its distinct Local Student Council flag.
+                  The Local Student Governments act as college-centered representation bodies tailored to handle departmental concerns. Each independent student department operates under its distinct Local Student Council flag.
                 </p>
                 <div className="grid grid-cols-2 gap-2 text-[11px]">
-                  <div className="p-2.5 bg-slate-50 border border-slate-100 rounded-lg font-semibold text-slate-700 text-center">CBA Council</div>
-                  <div className="p-2.5 bg-slate-50 border border-slate-100 rounded-lg font-semibold text-slate-700 text-center">CEIT Council</div>
-                  <div className="p-2.5 bg-slate-50 border border-slate-100 rounded-lg font-semibold text-slate-700 text-center">CITTE Council</div>
-                  <div className="p-2.5 bg-slate-50 border border-slate-100 rounded-lg font-semibold text-slate-700 text-center">CTHM Council</div>
+                  <div className="p-2.5 bg-slate-50 border border-slate-100 rounded-lg font-semibold text-slate-700 text-center">CBA LSG</div>
+                  <div className="p-2.5 bg-slate-50 border border-slate-100 rounded-lg font-semibold text-slate-700 text-center">CEIT LSG</div>
+                  <div className="p-2.5 bg-slate-50 border border-slate-100 rounded-lg font-semibold text-slate-700 text-center">CITTE LSG</div>
+                  <div className="p-2.5 bg-slate-50 border border-slate-100 rounded-lg font-semibold text-slate-700 text-center">CTHM LSG</div>
                 </div>
               </div>
             )}
@@ -282,7 +282,7 @@ export default function StudentPortal({ session }) {
                   <Award className="h-4 w-4 text-emerald-600" /> DLHS Supreme Secondary Student Government (SSG)
                 </div>
                 <p className="text-xs text-slate-600 leading-relaxed">
-                  The DepEd Laboratory High School Supreme Secondary Student Government oversees the developmental secondary high school student tiers at CSUCC. They specialize in intermediate leadership modeling, academic meets, and high-school activity operations under USG guidance.
+                  The Department of Laboratory High School Supreme Student Government oversees the developmental secondary high school studentrs at CSUCC. They specialize in intermediate leadership modeling, academic meets, and high-school activity.
                 </p>
               </div>
             )}
