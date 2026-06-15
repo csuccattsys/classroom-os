@@ -168,6 +168,8 @@ export default function App() {
     setUserRole('student')
     setEmail('')
     setPassword('')
+    setActiveTab('dashboard') // Explicitly reset tab routing state back to default view
+    window.location.hash = 'dashboard' // Instantly clear the institutional URL address hash
     await supabase.auth.signOut()
     setAppLoading(false)
   }
