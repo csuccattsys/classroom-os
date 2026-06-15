@@ -23,7 +23,8 @@ export default function Sidebar({
         <nav className="space-y-1">
           {menuItems.map((item) => {
             const IconComponent = item.icon
-            const isTabRestricted = (item.id === 'attendance' && (userRole === 'student' || userRole === 'ssg'))
+            // Updated to securely apply restricted UI styling on both Attendance and Student Directory modules
+            const isTabRestricted = (item.id === 'attendance' || item.id === 'students') && (userRole === 'student' || userRole === 'ssg')
             const isSelected = activeTab === item.id
             
             return (
