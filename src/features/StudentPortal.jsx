@@ -407,25 +407,25 @@ export default function StudentPortal({ session }) {
             <div className="bg-slate-50/80 border border-slate-200/70 rounded-xl p-6 flex flex-col items-center relative overflow-hidden">
               <div className="absolute inset-0 bg-[linear-gradient(to_right,#e2e8f0_1px,transparent_1px),linear-gradient(to_bottom,#e2e8f0_1px,transparent_1px)] bg-[size:1.5rem_1.5rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)] opacity-35" />
 
-              {/* LEVEL 1: LEADER COMMAND NODE */}
-              <div className="relative z-10 flex flex-col items-center group">
-                <div className="bg-gradient-to-b from-slate-900 to-slate-950 border border-slate-800 text-white shadow-md rounded-xl p-3.5 w-52 text-center transform transition-transform duration-300 hover:-translate-y-0.5">
-                  <div className="mx-auto w-6 h-6 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center mb-1.5 shadow-sm">
-                    <Crown className="h-3.5 w-3.5 animate-pulse" />
-                  </div>
-                  <h4 className="text-xs font-black tracking-tight">{currentGroup.leader.name}</h4>
-                  <div className="mt-1 flex flex-col items-center justify-center">
-                    <span className="text-[9px] text-emerald-400 font-extrabold uppercase tracking-widest">{currentGroup.leader.role}</span>
-                    <span className="text-[8px] text-slate-500 font-medium font-mono px-1.5 py-0.5 bg-slate-900 border border-slate-800 rounded mt-1">{currentGroup.leader.program}</span>
-                  </div>
-                </div>
+{/* LEVEL 1: LEADER COMMAND NODE */}
+<div className="relative z-10 flex flex-col items-center group">
+  <div className="bg-slate-900 border border-slate-800 text-white shadow-md rounded-xl p-3.5 w-52 text-center transform transition-transform duration-300 hover:-translate-y-0.5">
+    {/* Clean, minimalist tag instead of a cringe crown */}
+    <span className="bg-emerald-500/10 text-emerald-400 text-[9px] font-black tracking-widest uppercase px-2 py-0.5 rounded border border-emerald-500/20 inline-block mb-2">
+      Executive Head
+    </span>
+    <h4 className="text-xs font-black tracking-tight">{currentGroup.leader.name}</h4>
+    <div className="mt-1 flex flex-col items-center justify-center">
+      <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-widest">{currentGroup.leader.role}</span>
+      <span className="text-[8px] text-slate-500 font-medium font-mono px-1.5 py-0.5 bg-slate-950 border border-slate-800 rounded mt-1.5">{currentGroup.leader.program}</span>
+    </div>
+  </div>
 
-                {/* HIERARCHICAL STEM DIRECTION INDICATOR */}
-                <div className="w-0.5 h-6 bg-slate-300 relative">
-                  <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-1.5 h-1.5 bg-slate-300 rounded-full" />
-                </div>
-              </div>
-
+  {/* HIERARCHICAL STEM DIRECTION INDICATOR */}
+  <div className="w-0.5 h-6 bg-slate-300 relative">
+    <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-1.5 h-1.5 bg-slate-300 rounded-full" />
+  </div>
+</div>
               {/* LEVEL 2: LOWER HOVER REPRESENTATIVE TIERS */}
               <div className="relative w-full z-10 pt-2">
                 {/* Horizontal connection bar spanning the width of secondary units */}
