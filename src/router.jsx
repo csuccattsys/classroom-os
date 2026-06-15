@@ -3,6 +3,7 @@ import StudentPortal from './features/StudentPortal'
 import ExecutiveDashboard from './features/ExecutiveDashboard'
 import AttendanceTracker from './features/AttendanceTracker'
 import Announcements from './features/Announcements'
+import StudentLedger from './features/StudentLedger' // Imported the new Ledger Module
 import { Lock } from 'lucide-react'
 
 // 1. Centralized Route Registry Configuration
@@ -28,6 +29,14 @@ export const routes = [
     label: 'Official Bulletin Board',
     component: (props) => <Announcements userRole={props.userRole} />,
     requiresAuth: false
+  },
+  {
+    id: 'students',
+    label: 'College Roster',
+    component: (props) => <StudentLedger userRole={props.userRole} />,
+    requiresAuth: true,
+    allowedRoles: ['usg', 'cba_lsg', 'ceit_lsg', 'citte_lsg', 'cthm_lsg'],
+    deniedMessage: "University Student Government or authorized College LSG Board clearance is required to view the institutional student registry ledger."
   }
 ]
 
