@@ -153,7 +153,7 @@ export default function App() {
               <img src={usgLogo} alt="CSUCC USG Seal" className="h-full w-full object-contain" />
             </div>
             <div>
-              <h1 className="text-xs md:text-sm font-black tracking-tight uppercase text-slate-900 leading-none">CSUCC USG</h1>
+              <h1 className="text-xs md:text-sm font-black tracking-tight uppercase text-slate-900 leading-none">CSUCC Student Governance Portal</h1>
               <p className="text-[8px] md:text-[9px] text-slate-400 font-bold tracking-widest uppercase mt-1 hidden sm:block">Caraga State University Cabadbaran Campus</p>
             </div>
           </div>
