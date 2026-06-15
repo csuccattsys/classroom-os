@@ -24,6 +24,19 @@ export default function App() {
   const [systemTime, setSystemTime] = useState(new Date().toLocaleTimeString())
   const [activeToast, setActiveToast] = useState(null)
 
+  // --- SAFE FALLBACK TIMEOUT LATCH ENGINE ---
+  // Added to break the loading lock if Supabase connection handshakes stall or timeout completely
+  useEffect(() => {
+    const backupClearanceLatch = setTimeout(() => {
+      if (appLoading) {
+        console.warn("Supabase handshake timed out. Dropping to public observer fallback context.");
+        setAppLoading(false);
+      }
+    }, 5000); // 5 seconds threshold
+
+    return () => clearTimeout(backupClearanceLatch);
+  }, [appLoading]);
+
   // --- GLOBAL REAL-TIME APPLICATION NOTIFICATION LIFECYCLE ---
   useEffect(() => {
     const globalNotificationsChannel = supabase.channel('global:announcements')
@@ -116,7 +129,7 @@ export default function App() {
     { id: 'students', label: 'College Directory', icon: GraduationCap },
     { id: 'quizzes', label: 'Voter Polling Suite', icon: FileQuestion, locked: true },
     { id: 'records', label: 'Legislative Audit Ledger', icon: BarChart3, locked: true },
-  ] : []
+   ] : []
 
   if (appLoading) {
     return (
