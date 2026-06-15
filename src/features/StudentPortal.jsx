@@ -143,13 +143,22 @@ export default function StudentPortal({ session }) {
   }
 
   return (
-    // Enhanced base layout slide/fade container entry animation
-    <div className="space-y-6 relative text-slate-900 transition-all duration-500 ease-out animate-in fade-in slide-in-from-bottom-4 duration-700">
+    // Base layout utilizing a native CSS-in-JS style injection rule fallback for native animations
+    <div className="space-y-6 relative text-slate-900 transition-all duration-300">
+      <style>{`
+        @keyframes customFadeInUp {
+          from { opacity: 0; transform: translateY(16px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in-up {
+          animation: customFadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+      `}</style>
       
       {/* ================= 1. STUDENT WELCOME HERO WITH INTEGRATED DYNAMIC BELL BADGE ================= */}
-      <div className="bg-gradient-to-r from-slate-900 via-emerald-950 to-slate-900 rounded-2xl p-6 text-white border border-slate-800 shadow-lg flex flex-col md:flex-row justify-between items-start md:items-center gap-4 relative overflow-hidden group">
+      <div className="animate-fade-in-up bg-gradient-to-r from-slate-900 via-emerald-950 to-slate-900 rounded-2xl p-6 text-white border border-slate-800 shadow-lg flex flex-col md:flex-row justify-between items-start md:items-center gap-4 relative overflow-hidden group">
         {/* Animated fluid mesh light beam effect */}
-        <div className="absolute -right-16 -top-16 w-44 h-44 bg-emerald-500/10 rounded-full blur-3xl group-hover:scale-125 transition-transform duration-700 ease-out pointer-events-none" />
+        <div className="absolute -right-16 -top-16 w-44 h-44 bg-emerald-500/10 rounded-full blur-3xl transform group-hover:scale-125 transition-transform duration-700 pointer-events-none" />
         
         <div className="transform transition-all duration-300 hover:translate-x-1">
           <span className="bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-md tracking-wider inline-block animate-pulse">
@@ -164,7 +173,7 @@ export default function StudentPortal({ session }) {
         {/* Dynamic Notification Center Action Button Wrapper */}
         <button 
           onClick={handleClearNotifications}
-          className="relative flex items-center gap-2 bg-slate-950/40 hover:bg-slate-950/80 border border-slate-800 hover:border-emerald-500/40 px-4 py-2.5 rounded-xl transition-all duration-300 text-xs font-semibold shrink-0 group active:scale-95"
+          className="relative flex items-center gap-2 bg-slate-950/40 hover:bg-slate-950/80 border border-slate-800 hover:border-emerald-500/40 px-4 py-2.5 rounded-xl transition-all duration-300 text-xs font-semibold shrink-0 group active:scale-95 shadow-sm"
         >
           <Bell className={`h-4 w-4 text-slate-300 group-hover:text-emerald-400 transition-colors ${unreadCount > 0 ? 'animate-bounce text-emerald-400' : ''}`} />
           <span>Alerts Center</span>
@@ -177,8 +186,7 @@ export default function StudentPortal({ session }) {
       </div>
 
       {/* ================= 2. USG HIERARCHICAL STRUCTURE WORKSPACE (IMMEDIATELY AFTER WELCOME) ================= */}
-      {/* Cascading delay loading effect */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start animate-in fade-in slide-in-from-bottom-6 delay-150 fill-mode-both duration-700">
+      <div className="animate-fade-in-up grid grid-cols-1 lg:grid-cols-4 gap-6 items-start" style={{ animationDelay: '100ms' }}>
         
         {/* LEFT COLUMN: MINI DIRECTORY NAVIGATION COMPONENT */}
         <div className="bg-white border border-slate-200/80 rounded-2xl shadow-xs overflow-hidden lg:col-span-1 group transition-all duration-300 hover:shadow-md">
@@ -240,7 +248,7 @@ export default function StudentPortal({ session }) {
           <div className="flex flex-col items-center justify-center py-6 space-y-8 my-auto transition-all duration-500">
             
             {/* TIER 1: Presiding Leader (Davie) */}
-            <div className="flex flex-col items-center relative group/leader animate-in fade-in zoom-in-95 duration-500">
+            <div className="flex flex-col items-center relative group/leader transition-all duration-300">
               <div className="bg-white border border-slate-150 shadow-md rounded-2xl p-4 w-48 text-center space-y-2 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-xl hover:border-emerald-500/30">
                 <div className="w-14 h-14 bg-slate-50 rounded-full mx-auto flex items-center justify-center border border-slate-200 text-slate-700 group-hover/leader:bg-emerald-50 group-hover/leader:text-emerald-700 transition-colors duration-300">
                   <Users className="h-5 w-5 transform group-hover/leader:scale-110 transition-transform duration-300" />
@@ -267,8 +275,7 @@ export default function StudentPortal({ session }) {
               {currentGroup.officers.map((officer, index) => (
                 <div 
                   key={index} 
-                  style={{ animationDelay: `${(index + 1) * 75}ms` }}
-                  className="bg-white border border-slate-150 shadow-md rounded-2xl p-4 w-48 text-center space-y-2 relative group/member transition-all duration-300 transform hover:-translate-y-1 hover:shadow-xl hover:border-emerald-500/20 animate-in fade-in zoom-in-95 fill-mode-both"
+                  className="bg-white border border-slate-150 shadow-md rounded-2xl p-4 w-48 text-center space-y-2 relative group/member transition-all duration-300 transform hover:-translate-y-1 hover:shadow-xl hover:border-emerald-500/20"
                 >
                   {/* Stem connector point displayed over tablet layouts */}
                   <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 w-0.5 h-3 bg-slate-200 hidden sm:block transition-colors group-hover/member:bg-emerald-400 duration-300"></div>
@@ -305,7 +312,7 @@ export default function StudentPortal({ session }) {
       </div>
 
       {/* ================= 3. TWO-COLUMN INTERACTIVE PORTAL LAYOUT ================= */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-8 delay-300 fill-mode-both duration-700">
+      <div className="animate-fade-in-up grid grid-cols-1 lg:grid-cols-3 gap-6" style={{ animationDelay: '200ms' }}>
         
         {/* ================= LEFT / MAIN HUB CONTENT ================= */}
         <div className="lg:col-span-2 space-y-4">
@@ -313,28 +320,27 @@ export default function StudentPortal({ session }) {
           {/* CAMPUS ANNOUNCEMENTS BULLETIN FEED */}
           <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200/60 transition-all duration-300 hover:shadow-sm">
             <div className="flex items-center gap-2 text-slate-800 font-bold text-xs uppercase tracking-wider mb-2">
-              <Megaphone className="h-4 w-4 text-emerald-600 animate-bounce [animation-duration:2.5s]" /> Official Campus Announcements
+              <Megaphone className="h-4 w-4 text-emerald-600" /> Official Campus Announcements
             </div>
             <p className="text-xs text-slate-500 mb-4">Stay informed with real-time news, advisories, and updates directly from the USG.</p>
             
             {isLoading ? (
-              <div className="flex flex-col items-center justify-center p-12 bg-white rounded-xl border border-slate-200 space-y-2 shadow-inner animate-pulse">
+              <div className="flex flex-col items-center justify-center p-12 bg-white rounded-xl border border-slate-200 space-y-2 shadow-inner">
                 <Loader2 className="h-6 w-6 text-emerald-600 animate-spin" />
                 <p className="text-xs text-slate-400 font-medium">Synchronizing with campus bulletin record tables...</p>
               </div>
             ) : !announcements || announcements.length === 0 ? (
-              <div className="text-center p-12 bg-white rounded-xl border border-slate-200 animate-in fade-in duration-300">
+              <div className="text-center p-12 bg-white rounded-xl border border-slate-200">
                 <Megaphone className="h-8 w-8 text-slate-300 mx-auto mb-2" />
                 <p className="text-xs font-bold text-slate-700">No Announcements Posted</p>
                 <p className="text-[11px] text-slate-400 mt-0.5">The university administration dashboard hasn't published recent notices.</p>
               </div>
             ) : (
               <div className="space-y-3">
-                {announcements.map((item, idx) => (
+                {announcements.map((item) => (
                   <div 
                     key={item.id} 
-                    style={{ animationDelay: `${idx * 100}ms` }}
-                    className="bg-white p-4 rounded-xl border border-slate-200 space-y-3 transition-all duration-300 hover:border-slate-300 hover:shadow-md overflow-hidden animate-in fade-in slide-in-from-bottom-2 fill-mode-both"
+                    className="bg-white p-4 rounded-xl border border-slate-200 space-y-3 transition-all duration-300 hover:border-slate-300 hover:shadow-md overflow-hidden"
                   >
                     
                     <div className="flex justify-between items-start gap-4">
@@ -375,7 +381,7 @@ export default function StudentPortal({ session }) {
           <div className="bg-slate-50 border border-slate-200/80 p-6 rounded-2xl space-y-4 transition-all duration-300 hover:shadow-sm">
             <div>
               <h3 className="text-xs font-black uppercase tracking-wider text-slate-800 mb-1.5 flex items-center gap-2">
-                <Globe className="h-4 w-4 text-emerald-600 animate-spin [animation-duration:12s]" /> Caraga State University Cabadbaran Campus
+                <Globe className="h-4 w-4 text-emerald-600" /> Caraga State University Cabadbaran Campus
               </h3>
               <p className="text-xs text-slate-500 leading-relaxed">
                 The CSUCC University Student Government (USG) serves as the supreme student governing organization within the campus. This portal acts as a central repository layout engineered to maintain administrative data transparency, manage event data synchronization pipelines, and reinforce secure inter-council collaboration.
