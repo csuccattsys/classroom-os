@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import { 
   Calendar, CheckCircle, Info, Globe, Megaphone, Clock, User, 
-  HelpCircle, Link, Phone, Mail, ExternalLink, Loader2, Bell, MapPin
+  HelpCircle, Link, Phone, Mail, ExternalLink, Loader2, Bell, MapPin,
+  Users, Building2, ShieldCheck, Bookmark
 } from 'lucide-react'
 import { supabase } from '../supabaseClient' 
 
@@ -9,6 +10,32 @@ export default function StudentPortal({ session }) {
   const [announcements, setAnnouncements] = useState([])
   const [unreadCount, setUnreadCount] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
+  
+  // Toggle tab state for the structural organizational registry
+  const [activeTab, setActiveTab] = useState('executive')
+
+  // Official USG Organizational Registry Data Map
+  const structureData = {
+    executive: {
+      leader: { name: "Kylene L. Beniga", role: "President, CSUCC USG" },
+      officers: [
+        { name: "Earl Christian D. Villanueva", role: "Board Member, CSU CSGF" },
+        { name: "Elimelech A. Mendoza V", role: "Treasurer, CSU CSGF" },
+        { name: "Alleiah Mae S. Maravilla", role: "Board Member, CSU CSGF" }
+      ]
+    },
+    lowerhouse: {
+      leader: { name: "Speaker of the Council", role: "LSG House Chairperson" },
+      officers: [
+        { name: "CBA Representative", role: "LSG Representative Node" },
+        { name: "CEIT Representative", role: "LSG Representative Node" },
+        { name: "CITTE Representative", role: "LSG Representative Node" },
+        { name: "CTHM Representative", role: "LSG Representative Node" }
+      ]
+    }
+  }
+
+  const currentGroup = structureData[activeTab]
 
   useEffect(() => {
     // Request permission for desktop push notifications on system mount
@@ -43,7 +70,7 @@ export default function StudentPortal({ session }) {
 
       } catch (error) {
         console.error('Error synchronizing portal streams:', error.message)
-      } {
+      } finally {
         setIsLoading(false)
       }
     }
@@ -112,9 +139,9 @@ export default function StudentPortal({ session }) {
   }
 
   return (
-    <div className="space-y-6 animate-fade-in relative">
+    <div className="space-y-6 animate-fade-in relative text-slate-900">
       
-      {/* 1. STUDENT WELCOME HERO WITH INTEGRATED DYNAMIC BELL BADGE */}
+      {/* ================= 1. STUDENT WELCOME HERO WITH INTEGRATED DYNAMIC BELL BADGE ================= */}
       <div className="bg-gradient-to-r from-slate-900 to-emerald-950 rounded-2xl p-6 text-white border border-slate-800 shadow-lg flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <span className="bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-md">
@@ -141,7 +168,127 @@ export default function StudentPortal({ session }) {
         </button>
       </div>
 
-      {/* 2. TWO-COLUMN INTERACTIVE PORTAL LAYOUT */}
+      {/* ================= 2. USG HIERARCHICAL STRUCTURE WORKSPACE (NEW ELEMENT ADDED HERE) ================= */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
+        
+        {/* LEFT COLUMN: MINI DIRECTORY NAVIGATION COMPONENT */}
+        <div className="bg-white border border-slate-200/80 rounded-2xl shadow-xs overflow-hidden lg:col-span-1">
+          <div className="p-4 bg-slate-50 border-b border-slate-100 flex items-center gap-2">
+            <Building2 className="h-4 w-4 text-emerald-700" />
+            <span className="text-xs font-black uppercase tracking-wider text-slate-700">
+              CSUCC USG Office
+            </span>
+          </div>
+          <div className="p-2 space-y-1">
+            <button className="w-full text-left px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 rounded-xl transition flex items-center justify-between group">
+              <span>About USG</span>
+              <Bookmark className="h-3 w-3 text-slate-300 group-hover:text-emerald-600 transition" />
+            </button>
+            <button className="w-full text-left px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 rounded-xl transition flex items-center justify-between group">
+              <span>Vision and Mission Statements</span>
+              <ShieldCheck className="h-3 w-3 text-slate-300 group-hover:text-emerald-600 transition" />
+            </button>
+          </div>
+        </div>
+
+        {/* RIGHT COLUMN: MAIN INTERACTIVE ROSTER MAP BLOCK */}
+        <div className="bg-white border border-slate-200/80 rounded-2xl shadow-xs p-5 lg:col-span-3 min-h-[440px] flex flex-col justify-between">
+          
+          {/* HEADER ROW & ACTIVE TOGGLES */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-100 pb-4">
+            <div>
+              <h2 className="text-sm font-black uppercase tracking-wider text-slate-800">
+                University Student Government
+              </h2>
+              <p className="text-[10px] text-slate-400 mt-0.5">CSUCC Student Representation Hierarchy Tree</p>
+            </div>
+            
+            <div className="flex gap-2 bg-slate-100 p-1 rounded-xl self-start sm:self-auto">
+              <button
+                onClick={() => setActiveTab('executive')}
+                className={`px-3 py-1.5 text-[10px] font-bold rounded-lg transition-all ${
+                  activeTab === 'executive'
+                    ? 'bg-slate-900 text-white shadow-xs'
+                    : 'text-slate-500 hover:text-slate-900'
+                }`}
+              >
+                USG Executive Officers
+              </button>
+              <button
+                onClick={() => setActiveTab('lowerhouse')}
+                className={`px-3 py-1.5 text-[10px] font-bold rounded-lg transition-all ${
+                  activeTab === 'lowerhouse'
+                    ? 'bg-slate-900 text-white shadow-xs'
+                    : 'text-slate-500 hover:text-slate-900'
+                }`}
+              >
+                USG Lowerhouse
+              </button>
+            </div>
+          </div>
+
+          {/* TREE CANVAS STRUCTURE */}
+          <div className="flex flex-col items-center justify-center py-6 space-y-8 my-auto">
+            
+            {/* TIER 1: Presiding Leader */}
+            <div className="flex flex-col items-center relative">
+              <div className="bg-white border border-slate-150 shadow-md rounded-2xl p-4 w-48 text-center space-y-3 transition-all hover:shadow-lg">
+                <div className="w-14 h-14 bg-slate-50 rounded-full mx-auto flex items-center justify-center border border-slate-200 text-slate-700">
+                  <Users className="h-5 w-5" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-black text-slate-900 tracking-tight leading-tight">
+                    {currentGroup.leader.name}
+                  </h4>
+                  <p className="text-[10px] text-emerald-700 font-bold uppercase tracking-wider mt-0.5">
+                    {currentGroup.leader.role}
+                  </p>
+                </div>
+              </div>
+              
+              {/* Branch Node Connector Line */}
+              <div className="w-0.5 h-8 bg-slate-200 mt-2"></div>
+            </div>
+
+            {/* TIER 2: Secondary Officer Grid Rows */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full max-w-2xl justify-items-center">
+              {currentGroup.officers.map((officer, index) => (
+                <div 
+                  key={index} 
+                  className="bg-white border border-slate-150 shadow-md rounded-2xl p-4 w-48 text-center space-y-3 relative transition-all hover:shadow-lg"
+                >
+                  {/* Stem connector point displayed over tablet layouts */}
+                  <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 w-0.5 h-3 bg-slate-200 hidden sm:block"></div>
+                  
+                  <div className="w-12 h-12 bg-slate-50 rounded-full mx-auto flex items-center justify-center border border-slate-200 text-slate-600">
+                    <Users className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <h5 className="text-[11px] font-black text-slate-800 tracking-tight leading-tight">
+                      {officer.name}
+                    </h5>
+                    <p className="text-[9px] text-slate-400 font-medium mt-0.5">
+                      {officer.role}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+          </div>
+
+          {/* LEDGER STATUS VERIFICATION STRIP */}
+          <div className="border-t border-slate-100 pt-2 flex items-center justify-between text-[9px] text-slate-400 font-mono tracking-tight">
+            <span>Verified System Registry Nodes</span>
+            <span className="text-emerald-600 font-bold flex items-center gap-1">
+              <span className="h-1 w-1 rounded-full bg-emerald-500 animate-ping"></span> Live Sync
+            </span>
+          </div>
+
+        </div>
+      </div>
+
+      {/* ================= 3. TWO-COLUMN INTERACTIVE PORTAL LAYOUT ================= */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
         {/* ================= LEFT / MAIN HUB CONTENT ================= */}
