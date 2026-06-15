@@ -143,16 +143,20 @@ export default function StudentPortal({ session }) {
   }
 
   return (
-    <div className="space-y-6 animate-fade-in relative text-slate-900">
+    // Enhanced base layout slide/fade container entry animation
+    <div className="space-y-6 relative text-slate-900 transition-all duration-500 ease-out animate-in fade-in slide-in-from-bottom-4 duration-700">
       
       {/* ================= 1. STUDENT WELCOME HERO WITH INTEGRATED DYNAMIC BELL BADGE ================= */}
-      <div className="bg-gradient-to-r from-slate-900 to-emerald-950 rounded-2xl p-6 text-white border border-slate-800 shadow-lg flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <span className="bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-md">
+      <div className="bg-gradient-to-r from-slate-900 via-emerald-950 to-slate-900 rounded-2xl p-6 text-white border border-slate-800 shadow-lg flex flex-col md:flex-row justify-between items-start md:items-center gap-4 relative overflow-hidden group">
+        {/* Animated fluid mesh light beam effect */}
+        <div className="absolute -right-16 -top-16 w-44 h-44 bg-emerald-500/10 rounded-full blur-3xl group-hover:scale-125 transition-transform duration-700 ease-out pointer-events-none" />
+        
+        <div className="transform transition-all duration-300 hover:translate-x-1">
+          <span className="bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-md tracking-wider inline-block animate-pulse">
             Student View
           </span>
           <h2 className="text-xl font-black tracking-tight pt-3">Welcome to the Student Portal</h2>
-          <p className="text-xs text-slate-400 mt-1 max-w-md">
+          <p className="text-xs text-slate-400 mt-1 max-w-md leading-relaxed">
             Access campus public announcements, verify your event attendance, and participate in active student polling.
           </p>
         </div>
@@ -160,7 +164,7 @@ export default function StudentPortal({ session }) {
         {/* Dynamic Notification Center Action Button Wrapper */}
         <button 
           onClick={handleClearNotifications}
-          className="relative flex items-center gap-2 bg-slate-950/40 hover:bg-slate-950/80 border border-slate-800 hover:border-slate-700 px-4 py-2.5 rounded-xl transition text-xs font-semibold shrink-0 group"
+          className="relative flex items-center gap-2 bg-slate-950/40 hover:bg-slate-950/80 border border-slate-800 hover:border-emerald-500/40 px-4 py-2.5 rounded-xl transition-all duration-300 text-xs font-semibold shrink-0 group active:scale-95"
         >
           <Bell className={`h-4 w-4 text-slate-300 group-hover:text-emerald-400 transition-colors ${unreadCount > 0 ? 'animate-bounce text-emerald-400' : ''}`} />
           <span>Alerts Center</span>
@@ -173,30 +177,31 @@ export default function StudentPortal({ session }) {
       </div>
 
       {/* ================= 2. USG HIERARCHICAL STRUCTURE WORKSPACE (IMMEDIATELY AFTER WELCOME) ================= */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
+      {/* Cascading delay loading effect */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start animate-in fade-in slide-in-from-bottom-6 delay-150 fill-mode-both duration-700">
         
         {/* LEFT COLUMN: MINI DIRECTORY NAVIGATION COMPONENT */}
-        <div className="bg-white border border-slate-200/80 rounded-2xl shadow-xs overflow-hidden lg:col-span-1">
+        <div className="bg-white border border-slate-200/80 rounded-2xl shadow-xs overflow-hidden lg:col-span-1 group transition-all duration-300 hover:shadow-md">
           <div className="p-4 bg-slate-50 border-b border-slate-100 flex items-center gap-2">
-            <Building2 className="h-4 w-4 text-emerald-700" />
+            <Building2 className="h-4 w-4 text-emerald-700 group-hover:rotate-6 transition-transform duration-300" />
             <span className="text-xs font-black uppercase tracking-wider text-slate-700">
               CSUCC USG Office
             </span>
           </div>
           <div className="p-2 space-y-1">
-            <button className="w-full text-left px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 rounded-xl transition flex items-center justify-between group">
+            <button className="w-full text-left px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-emerald-800 rounded-xl transition-all duration-200 flex items-center justify-between group/btn">
               <span>About USG</span>
-              <Bookmark className="h-3 w-3 text-slate-300 group-hover:text-emerald-600 transition" />
+              <Bookmark className="h-3 w-3 text-slate-300 group-hover/btn:text-emerald-600 group-hover/btn:translate-x-0.5 transition-all duration-200" />
             </button>
-            <button className="w-full text-left px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 rounded-xl transition flex items-center justify-between group">
+            <button className="w-full text-left px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-emerald-800 rounded-xl transition-all duration-200 flex items-center justify-between group/btn">
               <span>Vision and Mission Statements</span>
-              <ShieldCheck className="h-3 w-3 text-slate-300 group-hover:text-emerald-600 transition" />
+              <ShieldCheck className="h-3 w-3 text-slate-300 group-hover/btn:text-emerald-600 group-hover/btn:translate-x-0.5 transition-all duration-200" />
             </button>
           </div>
         </div>
 
         {/* RIGHT COLUMN: MAIN INTERACTIVE ROSTER MAP BLOCK */}
-        <div className="bg-white border border-slate-200/80 rounded-2xl shadow-xs p-5 lg:col-span-3 min-h-[440px] flex flex-col justify-between">
+        <div className="bg-white border border-slate-200/80 rounded-2xl shadow-xs p-5 lg:col-span-3 min-h-[440px] flex flex-col justify-between transition-all duration-300 hover:shadow-md">
           
           {/* HEADER ROW & ACTIVE TOGGLES */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-100 pb-4">
@@ -207,23 +212,23 @@ export default function StudentPortal({ session }) {
               <p className="text-[10px] text-slate-400 mt-0.5">CSUCC Student Representation Hierarchy Tree</p>
             </div>
             
-            <div className="flex gap-2 bg-slate-100 p-1 rounded-xl self-start sm:self-auto">
+            <div className="flex gap-2 bg-slate-100 p-1 rounded-xl self-start sm:self-auto shadow-inner">
               <button
                 onClick={() => setActiveTab('executive')}
-                className={`px-3 py-1.5 text-[10px] font-bold rounded-lg transition-all ${
+                className={`px-3 py-1.5 text-[10px] font-bold rounded-lg transition-all duration-300 transform active:scale-95 ${
                   activeTab === 'executive'
-                    ? 'bg-slate-900 text-white shadow-xs'
-                    : 'text-slate-500 hover:text-slate-900'
+                    ? 'bg-slate-900 text-white shadow-md'
+                    : 'text-slate-500 hover:text-slate-900 hover:bg-slate-200/50'
                 }`}
               >
                 USG Executive Officers
               </button>
               <button
                 onClick={() => setActiveTab('lowerhouse')}
-                className={`px-3 py-1.5 text-[10px] font-bold rounded-lg transition-all ${
+                className={`px-3 py-1.5 text-[10px] font-bold rounded-lg transition-all duration-300 transform active:scale-95 ${
                   activeTab === 'lowerhouse'
-                    ? 'bg-slate-900 text-white shadow-xs'
-                    : 'text-slate-500 hover:text-slate-900'
+                    ? 'bg-slate-900 text-white shadow-md'
+                    : 'text-slate-500 hover:text-slate-900 hover:bg-slate-200/50'
                 }`}
               >
                 USG Lowerhouse
@@ -232,13 +237,13 @@ export default function StudentPortal({ session }) {
           </div>
 
           {/* TREE CANVAS STRUCTURE */}
-          <div className="flex flex-col items-center justify-center py-6 space-y-8 my-auto">
+          <div className="flex flex-col items-center justify-center py-6 space-y-8 my-auto transition-all duration-500">
             
             {/* TIER 1: Presiding Leader (Davie) */}
-            <div className="flex flex-col items-center relative">
-              <div className="bg-white border border-slate-150 shadow-md rounded-2xl p-4 w-48 text-center space-y-2 transition-all hover:shadow-lg">
-                <div className="w-14 h-14 bg-slate-50 rounded-full mx-auto flex items-center justify-center border border-slate-200 text-slate-700">
-                  <Users className="h-5 w-5" />
+            <div className="flex flex-col items-center relative group/leader animate-in fade-in zoom-in-95 duration-500">
+              <div className="bg-white border border-slate-150 shadow-md rounded-2xl p-4 w-48 text-center space-y-2 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-xl hover:border-emerald-500/30">
+                <div className="w-14 h-14 bg-slate-50 rounded-full mx-auto flex items-center justify-center border border-slate-200 text-slate-700 group-hover/leader:bg-emerald-50 group-hover/leader:text-emerald-700 transition-colors duration-300">
+                  <Users className="h-5 w-5 transform group-hover/leader:scale-110 transition-transform duration-300" />
                 </div>
                 <div>
                   <h4 className="text-xs font-black text-slate-900 tracking-tight leading-tight">
@@ -247,14 +252,14 @@ export default function StudentPortal({ session }) {
                   <p className="text-[10px] text-emerald-700 font-bold uppercase tracking-wider mt-0.5">
                     {currentGroup.leader.role}
                   </p>
-                  <p className="text-[9px] text-slate-400 font-medium font-mono mt-0.5">
+                  <p className="text-[9px] text-slate-400 font-medium font-mono mt-0.5 bg-slate-50 py-0.5 rounded-md border border-slate-100">
                     {currentGroup.leader.program}
                   </p>
                 </div>
               </div>
               
               {/* Branch Node Connector Line */}
-              <div className="w-0.5 h-8 bg-slate-200 mt-2"></div>
+              <div className="w-0.5 h-8 bg-slate-200 mt-2 transition-colors group-hover/leader:bg-emerald-400 duration-300"></div>
             </div>
 
             {/* TIER 2: Secondary Officer Grid Rows (Darius, Jowee, Ai Mae) */}
@@ -262,13 +267,14 @@ export default function StudentPortal({ session }) {
               {currentGroup.officers.map((officer, index) => (
                 <div 
                   key={index} 
-                  className="bg-white border border-slate-150 shadow-md rounded-2xl p-4 w-48 text-center space-y-2 relative transition-all hover:shadow-lg"
+                  style={{ animationDelay: `${(index + 1) * 75}ms` }}
+                  className="bg-white border border-slate-150 shadow-md rounded-2xl p-4 w-48 text-center space-y-2 relative group/member transition-all duration-300 transform hover:-translate-y-1 hover:shadow-xl hover:border-emerald-500/20 animate-in fade-in zoom-in-95 fill-mode-both"
                 >
                   {/* Stem connector point displayed over tablet layouts */}
-                  <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 w-0.5 h-3 bg-slate-200 hidden sm:block"></div>
+                  <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 w-0.5 h-3 bg-slate-200 hidden sm:block transition-colors group-hover/member:bg-emerald-400 duration-300"></div>
                   
-                  <div className="w-12 h-12 bg-slate-50 rounded-full mx-auto flex items-center justify-center border border-slate-200 text-slate-600">
-                    <Users className="h-4 w-4" />
+                  <div className="w-12 h-12 bg-slate-50 rounded-full mx-auto flex items-center justify-center border border-slate-200 text-slate-600 group-hover/member:bg-emerald-50 group-hover/member:text-emerald-600 transition-colors duration-300">
+                    <Users className="h-4 w-4 transform group-hover/member:scale-110 transition-transform duration-300" />
                   </div>
                   <div>
                     <h5 className="text-[11px] font-black text-slate-800 tracking-tight leading-tight">
@@ -277,7 +283,7 @@ export default function StudentPortal({ session }) {
                     <p className="text-[9px] text-emerald-700 font-semibold mt-0.5">
                       {officer.role.replace(', CSUCC USG', '')}
                     </p>
-                    <p className="text-[9px] text-slate-400 font-medium font-mono mt-0.5">
+                    <p className="text-[9px] text-slate-400 font-medium font-mono mt-0.5 bg-slate-50 py-0.5 rounded-md border border-slate-100">
                       {officer.program}
                     </p>
                   </div>
@@ -291,7 +297,7 @@ export default function StudentPortal({ session }) {
           <div className="border-t border-slate-100 pt-2 flex items-center justify-between text-[9px] text-slate-400 font-mono tracking-tight">
             <span>Verified System Registry Nodes</span>
             <span className="text-emerald-600 font-bold flex items-center gap-1">
-              <span className="h-1 w-1 rounded-full bg-emerald-500 animate-ping"></span> Live Sync
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-ping"></span> Live Sync
             </span>
           </div>
 
@@ -299,36 +305,40 @@ export default function StudentPortal({ session }) {
       </div>
 
       {/* ================= 3. TWO-COLUMN INTERACTIVE PORTAL LAYOUT ================= */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-8 delay-300 fill-mode-both duration-700">
         
         {/* ================= LEFT / MAIN HUB CONTENT ================= */}
         <div className="lg:col-span-2 space-y-4">
           
           {/* CAMPUS ANNOUNCEMENTS BULLETIN FEED */}
-          <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200/60">
+          <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200/60 transition-all duration-300 hover:shadow-sm">
             <div className="flex items-center gap-2 text-slate-800 font-bold text-xs uppercase tracking-wider mb-2">
-              <Megaphone className="h-4 w-4 text-emerald-600" /> Official Campus Announcements
+              <Megaphone className="h-4 w-4 text-emerald-600 animate-bounce [animation-duration:2.5s]" /> Official Campus Announcements
             </div>
             <p className="text-xs text-slate-500 mb-4">Stay informed with real-time news, advisories, and updates directly from the USG.</p>
             
             {isLoading ? (
-              <div className="flex flex-col items-center justify-center p-12 bg-white rounded-xl border border-slate-200 space-y-2">
+              <div className="flex flex-col items-center justify-center p-12 bg-white rounded-xl border border-slate-200 space-y-2 shadow-inner animate-pulse">
                 <Loader2 className="h-6 w-6 text-emerald-600 animate-spin" />
                 <p className="text-xs text-slate-400 font-medium">Synchronizing with campus bulletin record tables...</p>
               </div>
             ) : !announcements || announcements.length === 0 ? (
-              <div className="text-center p-12 bg-white rounded-xl border border-slate-200">
+              <div className="text-center p-12 bg-white rounded-xl border border-slate-200 animate-in fade-in duration-300">
                 <Megaphone className="h-8 w-8 text-slate-300 mx-auto mb-2" />
                 <p className="text-xs font-bold text-slate-700">No Announcements Posted</p>
                 <p className="text-[11px] text-slate-400 mt-0.5">The university administration dashboard hasn't published recent notices.</p>
               </div>
             ) : (
               <div className="space-y-3">
-                {announcements.map((item) => (
-                  <div key={item.id} className="bg-white p-4 rounded-xl border border-slate-200 space-y-3 transition-all hover:border-slate-300 overflow-hidden">
+                {announcements.map((item, idx) => (
+                  <div 
+                    key={item.id} 
+                    style={{ animationDelay: `${idx * 100}ms` }}
+                    className="bg-white p-4 rounded-xl border border-slate-200 space-y-3 transition-all duration-300 hover:border-slate-300 hover:shadow-md overflow-hidden animate-in fade-in slide-in-from-bottom-2 fill-mode-both"
+                  >
                     
                     <div className="flex justify-between items-start gap-4">
-                      <span className="bg-emerald-50 text-emerald-600 border border-emerald-100 font-black text-[9px] px-2 py-0.5 rounded-md uppercase tracking-wider">
+                      <span className="bg-emerald-50 text-emerald-600 border border-emerald-100 font-black text-[9px] px-2 py-0.5 rounded-md uppercase tracking-wider transition-colors hover:bg-emerald-100">
                         {item.category || 'General Advisory'}
                       </span>
                       <div className="flex items-center gap-1.5 text-[10px] text-slate-400 font-medium">
@@ -337,16 +347,16 @@ export default function StudentPortal({ session }) {
                     </div>
                     
                     <div className="space-y-2">
-                      <h3 className="text-xs font-bold text-slate-800">{item.title}</h3>
+                      <h3 className="text-xs font-bold text-slate-800 tracking-tight transition-colors hover:text-slate-900">{item.title}</h3>
                       <p className="text-xs text-slate-500 leading-relaxed whitespace-pre-wrap">{item.content}</p>
                     </div>
 
                     {item.image_url && (
-                      <div className="mt-2 rounded-xl overflow-hidden border border-slate-100 bg-slate-50 max-h-72 flex items-center justify-center">
+                      <div className="mt-2 rounded-xl overflow-hidden border border-slate-100 bg-slate-50 max-h-72 flex items-center justify-center overflow-hidden group/img">
                         <img 
                           src={item.image_url} 
                           alt={item.title}
-                          className="w-full h-full object-cover hover:scale-[1.01] transition-transform duration-200"
+                          className="w-full h-full object-cover transform hover:scale-[1.02] transition-transform duration-500 ease-out"
                           loading="lazy"
                         />
                       </div>
@@ -362,10 +372,10 @@ export default function StudentPortal({ session }) {
           </div>
 
           {/* ABOUT US PANEL VIEW */}
-          <div className="bg-slate-50 border border-slate-200/80 p-6 rounded-2xl space-y-4">
+          <div className="bg-slate-50 border border-slate-200/80 p-6 rounded-2xl space-y-4 transition-all duration-300 hover:shadow-sm">
             <div>
               <h3 className="text-xs font-black uppercase tracking-wider text-slate-800 mb-1.5 flex items-center gap-2">
-                <Globe className="h-4 w-4 text-emerald-600" /> Caraga State University Cabadbaran Campus
+                <Globe className="h-4 w-4 text-emerald-600 animate-spin [animation-duration:12s]" /> Caraga State University Cabadbaran Campus
               </h3>
               <p className="text-xs text-slate-500 leading-relaxed">
                 The CSUCC University Student Government (USG) serves as the supreme student governing organization within the campus. This portal acts as a central repository layout engineered to maintain administrative data transparency, manage event data synchronization pipelines, and reinforce secure inter-council collaboration.
@@ -383,16 +393,16 @@ export default function StudentPortal({ session }) {
           
           {/* HIGH-GRAPHICS USG HELPDESK CARD */}
           <div className="bg-slate-900 text-white border border-slate-800 p-5 rounded-2xl space-y-4 shadow-lg relative overflow-hidden group">
-            <div className="absolute -right-12 -bottom-12 w-32 h-32 bg-emerald-500/10 rounded-full blur-2xl group-hover:bg-emerald-500/20 transition-colors duration-300 pointer-events-none" />
+            <div className="absolute -right-12 -bottom-12 w-32 h-32 bg-emerald-500/10 rounded-full blur-2xl group-hover:bg-emerald-500/20 transition-colors duration-500 pointer-events-none" />
             
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
               <div className="flex items-center gap-2">
-                <div className="p-1.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-lg">
+                <div className="p-1.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-lg group-hover:rotate-12 transition-transform duration-300">
                   <HelpCircle className="h-4 w-4" />
                 </div>
                 <span className="text-slate-100 font-black text-xs uppercase tracking-wider">USG Help Desk</span>
               </div>
-              <span className="bg-emerald-500/10 text-emerald-400 text-[9px] font-bold px-2 py-0.5 rounded-full border border-emerald-500/20">
+              <span className="bg-emerald-500/10 text-emerald-400 text-[9px] font-bold px-2 py-0.5 rounded-full border border-emerald-500/20 animate-pulse">
                 Live Support
               </span>
             </div>
@@ -402,7 +412,7 @@ export default function StudentPortal({ session }) {
             </p>
             
             <div className="space-y-2.5 pt-1">
-              <div className="flex items-center gap-3 p-2 bg-slate-950/40 rounded-xl border border-slate-800 hover:border-slate-700/80 transition-colors group/row">
+              <div className="flex items-center gap-3 p-2 bg-slate-950/40 rounded-xl border border-slate-800 hover:border-emerald-500/40 transition-all duration-300 group/row transform hover:translate-x-1">
                 <div className="h-7 w-7 rounded-lg bg-emerald-600/10 text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/10">
                   <Mail className="h-3.5 w-3.5" />
                 </div>
@@ -412,7 +422,7 @@ export default function StudentPortal({ session }) {
                 </div>
               </div>
 
-              <div className="flex items-start gap-3 p-2 bg-slate-950/40 rounded-xl border border-slate-800 hover:border-slate-700/80 transition-colors">
+              <div className="flex items-start gap-3 p-2 bg-slate-950/40 rounded-xl border border-slate-800 hover:border-emerald-500/40 transition-all duration-300 transform hover:translate-x-1">
                 <div className="h-7 w-7 rounded-lg bg-emerald-600/10 text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/10 mt-0.5">
                   <MapPin className="h-3.5 w-3.5" />
                 </div>
@@ -425,7 +435,7 @@ export default function StudentPortal({ session }) {
           </div>
 
           {/* HIGH-GRAPHICS DYNAMIC INSTITUTIONAL LINKS HUB */}
-          <div className="bg-white border border-slate-200/80 p-5 rounded-2xl space-y-3.5 shadow-sm">
+          <div className="bg-white border border-slate-200/80 p-5 rounded-2xl space-y-3.5 shadow-sm transition-all duration-300 hover:shadow-md">
             <div className="flex items-center gap-2 text-slate-800 font-bold text-xs uppercase tracking-wider border-b border-slate-100 pb-2.5">
               <div className="p-1.5 bg-slate-50 border border-slate-200 text-slate-700 rounded-lg">
                 <Link className="h-3.5 w-3.5 text-emerald-600" />
@@ -438,10 +448,10 @@ export default function StudentPortal({ session }) {
                 href="https://beta-myschool.csucc.edu.ph" 
                 target="_blank" 
                 rel="noreferrer" 
-                className="flex items-center justify-between p-3 rounded-xl border border-slate-100 bg-gradient-to-r from-emerald-50/20 to-slate-50/40 hover:from-emerald-50/50 hover:to-emerald-50/10 hover:border-emerald-200/60 shadow-xs transition-all duration-200 hover:-translate-y-0.5 group"
+                className="flex items-center justify-between p-3 rounded-xl border border-slate-100 bg-gradient-to-r from-emerald-50/20 to-slate-50/40 hover:from-emerald-50/50 hover:to-emerald-50/10 hover:border-emerald-200/60 shadow-xs transition-all duration-300 transform hover:-translate-y-1 hover:shadow-md group"
               >
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="h-7 w-7 rounded-lg bg-emerald-50 border border-emerald-100 text-emerald-600 flex items-center justify-center font-bold text-xs shrink-0 group-hover:bg-emerald-600 group-hover:text-white group-hover:border-emerald-600 transition-all">MS</div>
+                  <div className="h-7 w-7 rounded-lg bg-emerald-50 border border-emerald-100 text-emerald-600 flex items-center justify-center font-bold text-xs shrink-0 group-hover:bg-emerald-600 group-hover:text-white group-hover:border-emerald-600 transition-all duration-300">MS</div>
                   <div className="flex flex-col min-w-0">
                     <span className="text-xs text-slate-800 font-bold tracking-tight">CSUCC MySchool Portal</span>
                     <span className="text-[10px] text-slate-400 truncate">Grades, profiles & schedules</span>
@@ -454,10 +464,10 @@ export default function StudentPortal({ session }) {
                 href="https://beta.csucc.edu.ph" 
                 target="_blank" 
                 rel="noreferrer" 
-                className="flex items-center justify-between p-3 rounded-xl border border-slate-100 bg-gradient-to-r from-emerald-50/20 to-slate-50/40 hover:from-emerald-50/50 hover:to-emerald-50/10 hover:border-emerald-200/60 shadow-xs transition-all duration-200 hover:-translate-y-0.5 group"
+                className="flex items-center justify-between p-3 rounded-xl border border-slate-100 bg-gradient-to-r from-emerald-50/20 to-slate-50/40 hover:from-emerald-50/50 hover:to-emerald-50/10 hover:border-emerald-200/60 shadow-xs transition-all duration-300 transform hover:-translate-y-1 hover:shadow-md group"
               >
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="h-7 w-7 rounded-lg bg-emerald-50 border border-emerald-100 text-emerald-600 flex items-center justify-center font-bold text-xs shrink-0 group-hover:bg-emerald-600 group-hover:text-white group-hover:border-emerald-600 transition-all">WB</div>
+                  <div className="h-7 w-7 rounded-lg bg-emerald-50 border border-emerald-100 text-emerald-600 flex items-center justify-center font-bold text-xs shrink-0 group-hover:bg-emerald-600 group-hover:text-white group-hover:border-emerald-600 transition-all duration-300">WB</div>
                   <div className="flex flex-col min-w-0">
                     <span className="text-xs text-slate-800 font-bold tracking-tight">CSUCC School Website</span>
                     <span className="text-[10px] text-slate-400 truncate">Official campus main page</span>
