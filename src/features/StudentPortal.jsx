@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { 
   Calendar, CheckCircle, Info, Globe, Megaphone, Clock, User, 
   HelpCircle, Link, Phone, Mail, ExternalLink, Loader2, Bell, MapPin,
-  Users, Building2, ShieldCheck, Bookmark
+  Users, Building2, ShieldCheck, Bookmark, Scale, FileText, HeartHandshake, Award
 } from 'lucide-react'
 import { supabase } from '../supabaseClient' 
 
@@ -11,8 +11,11 @@ export default function StudentPortal({ session }) {
   const [unreadCount, setUnreadCount] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
   
-  // Toggle tab state for the structural organizational registry
+  // Tab state for the structural organizational registry tree
   const [activeTab, setActiveTab] = useState('executive')
+  
+  // Interactive Directory active section state (References structural block from image_bd29a6.png)
+  const [activeSection, setActiveSection] = useState('about_usg')
 
   // Official USG Organizational Registry Data Map with current officers
   const structureData = {
@@ -42,17 +45,13 @@ export default function StudentPortal({ session }) {
   const currentGroup = structureData[activeTab]
 
   useEffect(() => {
-    // Request permission for desktop push notifications on system mount
     if (typeof window !== 'undefined' && 'Notification' in window) {
       Notification.requestPermission();
     }
 
-    // 1. Initial Data Fetch (Announcements & Unread Badge Indicator counts)
     async function fetchPortalData() {
       try {
         setIsLoading(true)
-        
-        // Fetch announcements
         const { data: announcementData, error: aError } = await supabase
           .from('announcements')
           .select('*')
@@ -61,7 +60,6 @@ export default function StudentPortal({ session }) {
         if (aError) throw aError
         if (announcementData) setAnnouncements(announcementData)
 
-        // Fetch unread notification counts for current logged-in user account session
         if (session?.user?.id) {
           const { count, error: cError } = await supabase
             .from('notifications')
@@ -71,7 +69,6 @@ export default function StudentPortal({ session }) {
 
           if (!cError) setUnreadCount(count || 0)
         }
-
       } catch (error) {
         console.error('Error synchronizing portal streams:', error.message)
       } finally {
@@ -81,7 +78,6 @@ export default function StudentPortal({ session }) {
 
     fetchPortalData()
 
-    // 2. Realtime Database Subscription Pipeline (Captures real-time broadcasts)
     const announcementsChannel = supabase
       .channel('public:announcements')
       .on(
@@ -89,15 +85,9 @@ export default function StudentPortal({ session }) {
         { event: '*', schema: 'public', table: 'announcements' },
         (payload) => {
           if (!payload) return;
-
           if (payload.eventType === 'INSERT') {
-            // Update Feed Layer
             setAnnouncements((prev) => [payload.new, ...(prev || [])])
-            
-            // Increment local unread visual badge count
             setUnreadCount((prev) => prev + 1)
-
-            // Trigger Native Browser Desktop Banner Alert Notification
             if (Notification.permission === 'granted') {
               new Notification(`📢 New USG Broadcast: ${payload.new.title}`, {
                 body: payload.new.content.substring(0, 80) + '...',
@@ -123,12 +113,9 @@ export default function StudentPortal({ session }) {
     }
   }, [session])
 
-  // Mark all notifications as read when the user checks their alerts
   const handleClearNotifications = async () => {
     if (!session?.user?.id || unreadCount === 0) return
-    
-    setUnreadCount(0) // Quick visual reset
-    
+    setUnreadCount(0)
     await supabase
       .from('notifications')
       .update({ is_read: true })
@@ -143,7 +130,6 @@ export default function StudentPortal({ session }) {
   }
 
   return (
-    // Base layout utilizing a native CSS-in-JS style injection rule fallback for native animations
     <div className="space-y-6 relative text-slate-900 transition-all duration-300">
       <style>{`
         @keyframes customFadeInUp {
@@ -155,9 +141,8 @@ export default function StudentPortal({ session }) {
         }
       `}</style>
       
-      {/* ================= 1. STUDENT WELCOME HERO WITH INTEGRATED DYNAMIC BELL BADGE ================= */}
+      {/* ================= 1. STUDENT WELCOME HERO ================= */}
       <div className="animate-fade-in-up bg-gradient-to-r from-slate-900 via-emerald-950 to-slate-900 rounded-2xl p-6 text-white border border-slate-800 shadow-lg flex flex-col md:flex-row justify-between items-start md:items-center gap-4 relative overflow-hidden group">
-        {/* Animated fluid mesh light beam effect */}
         <div className="absolute -right-16 -top-16 w-44 h-44 bg-emerald-500/10 rounded-full blur-3xl transform group-hover:scale-125 transition-transform duration-700 pointer-events-none" />
         
         <div className="transform transition-all duration-300 hover:translate-x-1">
@@ -170,7 +155,6 @@ export default function StudentPortal({ session }) {
           </p>
         </div>
 
-        {/* Dynamic Notification Center Action Button Wrapper */}
         <button 
           onClick={handleClearNotifications}
           className="relative flex items-center gap-2 bg-slate-950/40 hover:bg-slate-950/80 border border-slate-800 hover:border-emerald-500/40 px-4 py-2.5 rounded-xl transition-all duration-300 text-xs font-semibold shrink-0 group active:scale-95 shadow-sm"
@@ -185,140 +169,250 @@ export default function StudentPortal({ session }) {
         </button>
       </div>
 
-      {/* ================= 2. USG HIERARCHICAL STRUCTURE WORKSPACE (IMMEDIATELY AFTER WELCOME) ================= */}
+      {/* ================= 2. INTERACTIVE EXPANDED DIRECTORY (Based on image_bd29a6.png) ================= */}
       <div className="animate-fade-in-up grid grid-cols-1 lg:grid-cols-4 gap-6 items-start" style={{ animationDelay: '100ms' }}>
         
-        {/* LEFT COLUMN: MINI DIRECTORY NAVIGATION COMPONENT */}
-        <div className="bg-white border border-slate-200/80 rounded-2xl shadow-xs overflow-hidden lg:col-span-1 group transition-all duration-300 hover:shadow-md">
+        {/* LEFT COLUMN: THE EXPANDED OFFICE DIRECTORY PANEL */}
+        <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden lg:col-span-1 transition-all duration-300 hover:shadow-md">
           <div className="p-4 bg-slate-50 border-b border-slate-100 flex items-center gap-2">
-            <Building2 className="h-4 w-4 text-emerald-700 group-hover:rotate-6 transition-transform duration-300" />
+            <Building2 className="h-4 w-4 text-emerald-700" />
             <span className="text-xs font-black uppercase tracking-wider text-slate-700">
               CSUCC USG Office
             </span>
           </div>
+          
           <div className="p-2 space-y-1">
-            <button className="w-full text-left px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-emerald-800 rounded-xl transition-all duration-200 flex items-center justify-between group/btn">
+            <button 
+              onClick={() => setActiveSection('about_usg')}
+              className={`w-full text-left px-3 py-2 text-xs font-semibold rounded-xl transition-all duration-200 flex items-center justify-between group ${activeSection === 'about_usg' ? 'bg-emerald-50 text-emerald-800 font-bold' : 'text-slate-600 hover:bg-slate-50'}`}
+            >
               <span>About USG</span>
-              <Bookmark className="h-3 w-3 text-slate-300 group-hover/btn:text-emerald-600 group-hover/btn:translate-x-0.5 transition-all duration-200" />
+              <Bookmark className={`h-3.5 w-3.5 ${activeSection === 'about_usg' ? 'text-emerald-600' : 'text-slate-300 group-hover:text-slate-400'}`} />
             </button>
-            <button className="w-full text-left px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-emerald-800 rounded-xl transition-all duration-200 flex items-center justify-between group/btn">
-              <span>Vision and Mission Statements</span>
-              <ShieldCheck className="h-3 w-3 text-slate-300 group-hover/btn:text-emerald-600 group-hover/btn:translate-x-0.5 transition-all duration-200" />
+
+            <button 
+              onClick={() => setActiveSection('lsg')}
+              className={`w-full text-left px-3 py-2 text-xs font-semibold rounded-xl transition-all duration-200 flex items-center justify-between group ${activeSection === 'lsg' ? 'bg-emerald-50 text-emerald-800 font-bold' : 'text-slate-600 hover:bg-slate-50'}`}
+            >
+              <span>Local Student Government (LSG)</span>
+              <Users className={`h-3.5 w-3.5 ${activeSection === 'lsg' ? 'text-emerald-600' : 'text-slate-300 group-hover:text-slate-400'}`} />
+            </button>
+
+            <button 
+              onClick={() => setActiveSection('dlhs_ssg')}
+              className={`w-full text-left px-3 py-2 text-xs font-semibold rounded-xl transition-all duration-200 flex items-center justify-between group ${activeSection === 'dlhs_ssg' ? 'bg-emerald-50 text-emerald-800 font-bold' : 'text-slate-600 hover:bg-slate-50'}`}
+            >
+              <span>DLHS SSG</span>
+              <Award className={`h-3.5 w-3.5 ${activeSection === 'dlhs_ssg' ? 'text-emerald-600' : 'text-slate-300 group-hover:text-slate-400'}`} />
+            </button>
+
+            <button 
+              onClick={() => setActiveSection('comelec')}
+              className={`w-full text-left px-3 py-2 text-xs font-semibold rounded-xl transition-all duration-200 flex items-center justify-between group ${activeSection === 'comelec' ? 'bg-emerald-50 text-emerald-800 font-bold' : 'text-slate-600 hover:bg-slate-50'}`}
+            >
+              <span>CSUCC USG COMELEC</span>
+              <Scale className={`h-3.5 w-3.5 ${activeSection === 'comelec' ? 'text-emerald-600' : 'text-slate-300 group-hover:text-slate-400'}`} />
+            </button>
+
+            <button 
+              onClick={() => setActiveSection('coa')}
+              className={`w-full text-left px-3 py-2 text-xs font-semibold rounded-xl transition-all duration-200 flex items-center justify-between group ${activeSection === 'coa' ? 'bg-emerald-50 text-emerald-800 font-bold' : 'text-slate-600 hover:bg-slate-50'}`}
+            >
+              <span>CSUCC USG COA</span>
+              <ShieldCheck className={`h-3.5 w-3.5 ${activeSection === 'coa' ? 'text-emerald-600' : 'text-slate-300 group-hover:text-slate-400'}`} />
+            </button>
+
+            <button 
+              onClick={() => setActiveSection('charter')}
+              className={`w-full text-left px-3 py-2 text-xs font-semibold rounded-xl transition-all duration-200 flex items-center justify-between group ${activeSection === 'charter' ? 'bg-emerald-50 text-emerald-800 font-bold' : 'text-slate-600 hover:bg-slate-50'}`}
+            >
+              <span>Citizen's Charter</span>
+              <FileText className={`h-3.5 w-3.5 ${activeSection === 'charter' ? 'text-emerald-600' : 'text-slate-300 group-hover:text-slate-400'}`} />
+            </button>
+
+            <button 
+              onClick={() => setActiveSection('services')}
+              className={`w-full text-left px-3 py-2 text-xs font-semibold rounded-xl transition-all duration-200 flex items-center justify-between group ${activeSection === 'services' ? 'bg-emerald-50 text-emerald-800 font-bold' : 'text-slate-600 hover:bg-slate-50'}`}
+            >
+              <span>Student Services</span>
+              <HeartHandshake className={`h-3.5 w-3.5 ${activeSection === 'services' ? 'text-emerald-600' : 'text-slate-300 group-hover:text-slate-400'}`} />
             </button>
           </div>
         </div>
 
-        {/* RIGHT COLUMN: MAIN INTERACTIVE ROSTER MAP BLOCK */}
-        <div className="bg-white border border-slate-200/80 rounded-2xl shadow-xs p-5 lg:col-span-3 min-h-[440px] flex flex-col justify-between transition-all duration-300 hover:shadow-md">
+        {/* RIGHT COLUMN: DYNAMIC CONTENT CANVAS REPLACING ADJACENT PREVIEW BOX */}
+        <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-5 lg:col-span-3 min-h-[440px] flex flex-col justify-between transition-all duration-300 hover:shadow-md">
           
-          {/* HEADER ROW & ACTIVE TOGGLES */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-100 pb-4">
-            <div>
-              <h2 className="text-sm font-black uppercase tracking-wider text-slate-800">
-                University Student Government
-              </h2>
-              <p className="text-[10px] text-slate-400 mt-0.5">CSUCC Student Representation Hierarchy Tree</p>
+          <div className="space-y-4 my-auto">
+            {activeSection === 'about_usg' && (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 text-slate-800 font-black text-sm uppercase tracking-wider">
+                  <Bookmark className="h-4 w-4 text-emerald-600" /> About University Student Government (USG)
+                </div>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  The CSUCC University Student Government is the supreme student governing body of the campus. It is established to protect student rights, foster democratic learning environments, and supervise university student organizations while pushing forward transparent representation.
+                </p>
+                <div className="bg-slate-50 border border-slate-100 p-3 rounded-xl">
+                  <span className="text-[10px] font-bold text-slate-700 uppercase tracking-wide block mb-1">Core Mandate</span>
+                  <p className="text-[11px] text-slate-500">To interface dynamically with university executives and champion equitable administrative, academic, and student affairs modifications across the institution.</p>
+                </div>
+              </div>
+            )}
+
+            {activeSection === 'lsg' && (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 text-slate-800 font-black text-sm uppercase tracking-wider">
+                  <Users className="h-4 w-4 text-emerald-600" /> Local Student Government (LSG)
+                </div>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  The Local Student Governments act as college-centric representation bodies tailored to handle departmental micro-concerns. Each independent student department operates under its distinct Local Student Council flag.
+                </p>
+                <div className="grid grid-cols-2 gap-2 text-[11px]">
+                  <div className="p-2.5 bg-slate-50 border border-slate-100 rounded-lg font-semibold text-slate-700 text-center">CBA Council</div>
+                  <div className="p-2.5 bg-slate-50 border border-slate-100 rounded-lg font-semibold text-slate-700 text-center">CEIT Council</div>
+                  <div className="p-2.5 bg-slate-50 border border-slate-100 rounded-lg font-semibold text-slate-700 text-center">CITTE Council</div>
+                  <div className="p-2.5 bg-slate-50 border border-slate-100 rounded-lg font-semibold text-slate-700 text-center">CTHM Council</div>
+                </div>
+              </div>
+            )}
+
+            {activeSection === 'dlhs_ssg' && (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 text-slate-800 font-black text-sm uppercase tracking-wider">
+                  <Award className="h-4 w-4 text-emerald-600" /> DLHS Supreme Secondary Student Government (SSG)
+                </div>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  The DepEd Laboratory High School Supreme Secondary Student Government oversees the developmental secondary high school student tiers at CSUCC. They specialize in intermediate leadership modeling, academic meets, and high-school activity operations under USG guidance.
+                </p>
+              </div>
+            )}
+
+            {activeSection === 'comelec' && (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 text-slate-800 font-black text-sm uppercase tracking-wider">
+                  <Scale className="h-4 w-4 text-emerald-600" /> CSUCC USG COMELEC
+                </div>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  The Commission on Elections (COMELEC) is an independent statutory constitutional commission tasked to oversee institutional voter registries, candidate screenings, student electoral debates, and the processing of secure polling databases during annual leadership renewals.
+                </p>
+                <div className="border border-amber-200 bg-amber-50/40 text-amber-900 p-2.5 rounded-xl text-[11px] flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse shrink-0"></span>
+                  <span>Electoral windows are managed autonomously under commission-defined provisions.</span>
+                </div>
+              </div>
+            )}
+
+            {activeSection === 'coa' && (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 text-slate-800 font-black text-sm uppercase tracking-wider">
+                  <ShieldCheck className="h-4 w-4 text-emerald-600" /> CSUCC USG COA
+                </div>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  The Commission on Audit (COA) is the supreme internal fiscal watchdog within the USG ecosystem. They verify liquidity allocations, validate treasury receipt columns post campus events, and audit mandatory student group funding sheets to maintain transparency.
+                </p>
+              </div>
+            )}
+
+            {activeSection === 'charter' && (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 text-slate-800 font-black text-sm uppercase tracking-wider">
+                  <FileText className="h-4 w-4 text-emerald-600" /> CSUCC Student Citizen's Charter
+                </div>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  The Citizen's Charter streamlines the turn-around times for campus public transactions. It ensures efficiency in service delivery across student applications, uniform distribution, financial clearings, and permit issuances.
+                </p>
+                <table className="w-full text-left text-[11px] border border-slate-100 rounded-lg overflow-hidden">
+                  <thead>
+                    <tr className="bg-slate-50 text-slate-700 font-bold border-b border-slate-100">
+                      <th className="p-2">Service Type</th>
+                      <th className="p-2">Turnaround Time</th>
+                    </tr>
+                  </thead>
+                  <tbody className="text-slate-500 divide-y divide-slate-100">
+                    <tr>
+                      <td className="p-2">Organization Accreditation</td>
+                      <td className="p-2">3–5 Working Days</td>
+                    </tr>
+                    <tr>
+                      <td className="p-2">Event Permit Endorsement</td>
+                      <td className="p-2">24–48 Hours</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {activeSection === 'services' && (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 text-slate-800 font-black text-sm uppercase tracking-wider">
+                  <HeartHandshake className="h-4 w-4 text-emerald-600" /> Student Services Hub
+                </div>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  Your entry point into university-funded student initiatives and welfare programs designed to assist your academic journey:
+                </p>
+                <ul className="text-xs text-slate-600 space-y-1.5 list-disc pl-4 font-medium">
+                  <li>Locker Rentals & Equipment Borrowing Pipelines</li>
+                  <li>Student Grievance & Legal Representation Desk</li>
+                  <li>Emergency Student Financial Aid Contingency Coordination</li>
+                  <li>Co-Curricular Group Accreditation and Resource Distribution</li>
+                </ul>
+              </div>
+            )}
+          </div>
+
+          {/* LOWER LIVE ROSTER VIEW SWITCHER */}
+          <div className="border-t border-slate-100 pt-3 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+            <div className="text-[10px] text-slate-400 font-mono">
+              Viewing Roster Hierarchy Base:
             </div>
-            
-            <div className="flex gap-2 bg-slate-100 p-1 rounded-xl self-start sm:self-auto shadow-inner">
+            <div className="flex gap-2 bg-slate-100 p-1 rounded-xl shadow-inner">
               <button
                 onClick={() => setActiveTab('executive')}
-                className={`px-3 py-1.5 text-[10px] font-bold rounded-lg transition-all duration-300 transform active:scale-95 ${
-                  activeTab === 'executive'
-                    ? 'bg-slate-900 text-white shadow-md'
-                    : 'text-slate-500 hover:text-slate-900 hover:bg-slate-200/50'
+                className={`px-3 py-1.5 text-[10px] font-bold rounded-lg transition-all duration-300 ${
+                  activeTab === 'executive' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-500 hover:text-slate-900'
                 }`}
               >
-                USG Executive Officers
+                Executive Tree
               </button>
               <button
                 onClick={() => setActiveTab('lowerhouse')}
-                className={`px-3 py-1.5 text-[10px] font-bold rounded-lg transition-all duration-300 transform active:scale-95 ${
-                  activeTab === 'lowerhouse'
-                    ? 'bg-slate-900 text-white shadow-md'
-                    : 'text-slate-500 hover:text-slate-900 hover:bg-slate-200/50'
+                className={`px-3 py-1.5 text-[10px] font-bold rounded-lg transition-all duration-300 ${
+                  activeTab === 'lowerhouse' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-500 hover:text-slate-900'
                 }`}
               >
-                USG Lowerhouse
+                Lowerhouse Tree
               </button>
             </div>
           </div>
 
-          {/* TREE CANVAS STRUCTURE */}
-          <div className="flex flex-col items-center justify-center py-6 space-y-8 my-auto transition-all duration-500">
-            
-            {/* TIER 1: Presiding Leader (Davie) */}
-            <div className="flex flex-col items-center relative group/leader transition-all duration-300">
-              <div className="bg-white border border-slate-150 shadow-md rounded-2xl p-4 w-48 text-center space-y-2 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-xl hover:border-emerald-500/30">
-                <div className="w-14 h-14 bg-slate-50 rounded-full mx-auto flex items-center justify-center border border-slate-200 text-slate-700 group-hover/leader:bg-emerald-50 group-hover/leader:text-emerald-700 transition-colors duration-300">
-                  <Users className="h-5 w-5 transform group-hover/leader:scale-110 transition-transform duration-300" />
-                </div>
-                <div>
-                  <h4 className="text-xs font-black text-slate-900 tracking-tight leading-tight">
-                    {currentGroup.leader.name}
-                  </h4>
-                  <p className="text-[10px] text-emerald-700 font-bold uppercase tracking-wider mt-0.5">
-                    {currentGroup.leader.role}
-                  </p>
-                  <p className="text-[9px] text-slate-400 font-medium font-mono mt-0.5 bg-slate-50 py-0.5 rounded-md border border-slate-100">
-                    {currentGroup.leader.program}
-                  </p>
-                </div>
-              </div>
-              
-              {/* Branch Node Connector Line */}
-              <div className="w-0.5 h-8 bg-slate-200 mt-2 transition-colors group-hover/leader:bg-emerald-400 duration-300"></div>
+          {/* DISPLAY OF TREE STRUCTURAL CANVAS NODE FOR SELECTED TAB */}
+          <div className="flex flex-col items-center justify-center py-4 space-y-4 border-t border-slate-50 mt-3 bg-slate-50/50 rounded-xl p-3">
+            <div className="bg-white border border-slate-200 shadow-xs rounded-xl p-3 w-44 text-center">
+              <h4 className="text-[11px] font-black text-slate-900 tracking-tight">{currentGroup.leader.name}</h4>
+              <p className="text-[9px] text-emerald-700 font-bold uppercase tracking-wider">{currentGroup.leader.role}</p>
             </div>
-
-            {/* TIER 2: Secondary Officer Grid Rows (Darius, Jowee, Ai Mae) */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full max-w-2xl justify-items-center">
+            
+            <div className="flex flex-wrap justify-center gap-2">
               {currentGroup.officers.map((officer, index) => (
-                <div 
-                  key={index} 
-                  className="bg-white border border-slate-150 shadow-md rounded-2xl p-4 w-48 text-center space-y-2 relative group/member transition-all duration-300 transform hover:-translate-y-1 hover:shadow-xl hover:border-emerald-500/20"
-                >
-                  {/* Stem connector point displayed over tablet layouts */}
-                  <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 w-0.5 h-3 bg-slate-200 hidden sm:block transition-colors group-hover/member:bg-emerald-400 duration-300"></div>
-                  
-                  <div className="w-12 h-12 bg-slate-50 rounded-full mx-auto flex items-center justify-center border border-slate-200 text-slate-600 group-hover/member:bg-emerald-50 group-hover/member:text-emerald-600 transition-colors duration-300">
-                    <Users className="h-4 w-4 transform group-hover/member:scale-110 transition-transform duration-300" />
-                  </div>
-                  <div>
-                    <h5 className="text-[11px] font-black text-slate-800 tracking-tight leading-tight">
-                      {officer.name}
-                    </h5>
-                    <p className="text-[9px] text-emerald-700 font-semibold mt-0.5">
-                      {officer.role.replace(', CSUCC USG', '')}
-                    </p>
-                    <p className="text-[9px] text-slate-400 font-medium font-mono mt-0.5 bg-slate-50 py-0.5 rounded-md border border-slate-100">
-                      {officer.program}
-                    </p>
-                  </div>
+                <div key={index} className="bg-white border border-slate-200 shadow-xs rounded-xl p-2 w-36 text-center text-[10px]">
+                  <h5 className="font-bold text-slate-800 leading-tight">{officer.name}</h5>
+                  <p className="text-[8px] text-emerald-600 font-medium">{officer.role.replace(', CSUCC USG', '')}</p>
                 </div>
               ))}
             </div>
-
-          </div>
-
-          {/* LEDGER STATUS VERIFICATION STRIP */}
-          <div className="border-t border-slate-100 pt-2 flex items-center justify-between text-[9px] text-slate-400 font-mono tracking-tight">
-            <span>Verified System Registry Nodes</span>
-            <span className="text-emerald-600 font-bold flex items-center gap-1">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-ping"></span> Live Sync
-            </span>
           </div>
 
         </div>
       </div>
 
-      {/* ================= 3. TWO-COLUMN INTERACTIVE PORTAL LAYOUT ================= */}
+      {/* ================= 3. TWO-COLUMN PORTAL EVENTS & ANNOUNCEMENTS LAYOUT ================= */}
       <div className="animate-fade-in-up grid grid-cols-1 lg:grid-cols-3 gap-6" style={{ animationDelay: '200ms' }}>
         
         {/* ================= LEFT / MAIN HUB CONTENT ================= */}
         <div className="lg:col-span-2 space-y-4">
           
           {/* CAMPUS ANNOUNCEMENTS BULLETIN FEED */}
-          <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200/60 transition-all duration-300 hover:shadow-sm">
+          <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200 transition-all duration-300 hover:shadow-sm">
             <div className="flex items-center gap-2 text-slate-800 font-bold text-xs uppercase tracking-wider mb-2">
               <Megaphone className="h-4 w-4 text-emerald-600" /> Official Campus Announcements
             </div>
@@ -342,9 +436,8 @@ export default function StudentPortal({ session }) {
                     key={item.id} 
                     className="bg-white p-4 rounded-xl border border-slate-200 space-y-3 transition-all duration-300 hover:border-slate-300 hover:shadow-md overflow-hidden"
                   >
-                    
                     <div className="flex justify-between items-start gap-4">
-                      <span className="bg-emerald-50 text-emerald-600 border border-emerald-100 font-black text-[9px] px-2 py-0.5 rounded-md uppercase tracking-wider transition-colors hover:bg-emerald-100">
+                      <span className="bg-emerald-50 text-emerald-600 border border-emerald-100 font-black text-[9px] px-2 py-0.5 rounded-md uppercase tracking-wider">
                         {item.category || 'General Advisory'}
                       </span>
                       <div className="flex items-center gap-1.5 text-[10px] text-slate-400 font-medium">
@@ -353,12 +446,12 @@ export default function StudentPortal({ session }) {
                     </div>
                     
                     <div className="space-y-2">
-                      <h3 className="text-xs font-bold text-slate-800 tracking-tight transition-colors hover:text-slate-900">{item.title}</h3>
+                      <h3 className="text-xs font-bold text-slate-800 tracking-tight">{item.title}</h3>
                       <p className="text-xs text-slate-500 leading-relaxed whitespace-pre-wrap">{item.content}</p>
                     </div>
 
                     {item.image_url && (
-                      <div className="mt-2 rounded-xl overflow-hidden border border-slate-100 bg-slate-50 max-h-72 flex items-center justify-center overflow-hidden group/img">
+                      <div className="mt-2 rounded-xl overflow-hidden border border-slate-100 bg-slate-50 max-h-72 flex items-center justify-center overflow-hidden">
                         <img 
                           src={item.image_url} 
                           alt={item.title}
@@ -377,19 +470,19 @@ export default function StudentPortal({ session }) {
             )}
           </div>
 
-          {/* ABOUT US PANEL VIEW */}
-          <div className="bg-slate-50 border border-slate-200/80 p-6 rounded-2xl space-y-4 transition-all duration-300 hover:shadow-sm">
+          {/* CAMPUS ABOUT US STRIP */}
+          <div className="bg-slate-50 border border-slate-200 p-6 rounded-2xl space-y-4 transition-all duration-300 hover:shadow-sm">
             <div>
               <h3 className="text-xs font-black uppercase tracking-wider text-slate-800 mb-1.5 flex items-center gap-2">
                 <Globe className="h-4 w-4 text-emerald-600" /> Caraga State University Cabadbaran Campus
               </h3>
               <p className="text-xs text-slate-500 leading-relaxed">
-                The CSUCC University Student Government (USG) serves as the supreme student governing organization within the campus. This portal acts as a central repository layout engineered to maintain administrative data transparency, manage event data synchronization pipelines, and reinforce secure inter-council collaboration.
+                This portal serves as an interactive ecosystem deployed for students to interact directly with internal campus commission bodies, review regulatory timelines, and maintain a highly verified line of dialogue with local councils.
               </p>
             </div>
-            <div className="border-t border-slate-200/60 pt-4 flex justify-between items-center text-[10px] text-slate-400 font-mono">
-              <span>USG Portal v1.0.0</span>
-              <span>Secure SSL Link Enabled</span>
+            <div className="border-t border-slate-200 pt-4 flex justify-between items-center text-[10px] text-slate-400 font-mono">
+              <span>USG Portal v1.2.0</span>
+              <span>Secure SSL Registry Link</span>
             </div>
           </div>
         </div>
@@ -403,7 +496,7 @@ export default function StudentPortal({ session }) {
             
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
               <div className="flex items-center gap-2">
-                <div className="p-1.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-lg group-hover:rotate-12 transition-transform duration-300">
+                <div className="p-1.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-lg">
                   <HelpCircle className="h-4 w-4" />
                 </div>
                 <span className="text-slate-100 font-black text-xs uppercase tracking-wider">USG Help Desk</span>
@@ -418,13 +511,13 @@ export default function StudentPortal({ session }) {
             </p>
             
             <div className="space-y-2.5 pt-1">
-              <div className="flex items-center gap-3 p-2 bg-slate-950/40 rounded-xl border border-slate-800 hover:border-emerald-500/40 transition-all duration-300 group/row transform hover:translate-x-1">
+              <div className="flex items-center gap-3 p-2 bg-slate-950/40 rounded-xl border border-slate-800 hover:border-emerald-500/40 transition-all duration-300 transform hover:translate-x-1">
                 <div className="h-7 w-7 rounded-lg bg-emerald-600/10 text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/10">
                   <Mail className="h-3.5 w-3.5" />
                 </div>
                 <div className="flex flex-col min-w-0">
                   <span className="text-[9px] uppercase tracking-wider font-bold text-slate-500">Official Email</span>
-                  <span className="truncate font-mono text-[11px] text-slate-300 group-hover/row:text-emerald-400 transition-colors">usg@csucc.edu.ph</span>
+                  <span className="truncate font-mono text-[11px] text-slate-300">usg@csucc.edu.ph</span>
                 </div>
               </div>
 
@@ -441,7 +534,7 @@ export default function StudentPortal({ session }) {
           </div>
 
           {/* HIGH-GRAPHICS DYNAMIC INSTITUTIONAL LINKS HUB */}
-          <div className="bg-white border border-slate-200/80 p-5 rounded-2xl space-y-3.5 shadow-sm transition-all duration-300 hover:shadow-md">
+          <div className="bg-white border border-slate-200 p-5 rounded-2xl space-y-3.5 shadow-sm transition-all duration-300 hover:shadow-md">
             <div className="flex items-center gap-2 text-slate-800 font-bold text-xs uppercase tracking-wider border-b border-slate-100 pb-2.5">
               <div className="p-1.5 bg-slate-50 border border-slate-200 text-slate-700 rounded-lg">
                 <Link className="h-3.5 w-3.5 text-emerald-600" />
