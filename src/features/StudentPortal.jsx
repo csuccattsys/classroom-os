@@ -14,23 +14,27 @@ export default function StudentPortal({ session }) {
   // Toggle tab state for the structural organizational registry
   const [activeTab, setActiveTab] = useState('executive')
 
-  // Official USG Organizational Registry Data Map
+  // Official USG Organizational Registry Data Map with current officers
   const structureData = {
     executive: {
-      leader: { name: "Kylene L. Beniga", role: "President, CSUCC USG" },
+      leader: { 
+        name: "Davie P. Sialongo", 
+        role: "President, CSUCC USG",
+        program: "BTLED - HE"
+      },
       officers: [
-        { name: "Earl Christian D. Villanueva", role: "Board Member, CSU CSGF" },
-        { name: "Elimelech A. Mendoza V", role: "Treasurer, CSU CSGF" },
-        { name: "Alleiah Mae S. Maravilla", role: "Board Member, CSU CSGF" }
+        { name: "Darius Noel Q. Madiclum", role: "Vice President, CSUCC USG", program: "BTLED - IA" },
+        { name: "Jowee Allen B. Bajaro", role: "Executive Secretary, CSUCC USG", program: "BTLED - HE" },
+        { name: "Ai Mae P. Arcenas", role: "Secretary, CSUCC USG", program: "BTLED - IA" }
       ]
     },
     lowerhouse: {
-      leader: { name: "Speaker of the Council", role: "LSG House Chairperson" },
+      leader: { name: "Speaker of the Council", role: "LSG House Chairperson", program: "Governance Node" },
       officers: [
-        { name: "CBA Representative", role: "LSG Representative Node" },
-        { name: "CEIT Representative", role: "LSG Representative Node" },
-        { name: "CITTE Representative", role: "LSG Representative Node" },
-        { name: "CTHM Representative", role: "LSG Representative Node" }
+        { name: "CBA Representative", role: "LSG Representative Node", program: "CBA Council" },
+        { name: "CEIT Representative", role: "LSG Representative Node", program: "CEIT Council" },
+        { name: "CITTE Representative", role: "LSG Representative Node", program: "CITTE Council" },
+        { name: "CTHM Representative", role: "LSG Representative Node", program: "CTHM Council" }
       ]
     }
   }
@@ -168,7 +172,7 @@ export default function StudentPortal({ session }) {
         </button>
       </div>
 
-      {/* ================= 2. USG HIERARCHICAL STRUCTURE WORKSPACE (NEW ELEMENT ADDED HERE) ================= */}
+      {/* ================= 2. USG HIERARCHICAL STRUCTURE WORKSPACE (IMMEDIATELY AFTER WELCOME) ================= */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
         
         {/* LEFT COLUMN: MINI DIRECTORY NAVIGATION COMPONENT */}
@@ -230,9 +234,9 @@ export default function StudentPortal({ session }) {
           {/* TREE CANVAS STRUCTURE */}
           <div className="flex flex-col items-center justify-center py-6 space-y-8 my-auto">
             
-            {/* TIER 1: Presiding Leader */}
+            {/* TIER 1: Presiding Leader (Davie) */}
             <div className="flex flex-col items-center relative">
-              <div className="bg-white border border-slate-150 shadow-md rounded-2xl p-4 w-48 text-center space-y-3 transition-all hover:shadow-lg">
+              <div className="bg-white border border-slate-150 shadow-md rounded-2xl p-4 w-48 text-center space-y-2 transition-all hover:shadow-lg">
                 <div className="w-14 h-14 bg-slate-50 rounded-full mx-auto flex items-center justify-center border border-slate-200 text-slate-700">
                   <Users className="h-5 w-5" />
                 </div>
@@ -243,6 +247,9 @@ export default function StudentPortal({ session }) {
                   <p className="text-[10px] text-emerald-700 font-bold uppercase tracking-wider mt-0.5">
                     {currentGroup.leader.role}
                   </p>
+                  <p className="text-[9px] text-slate-400 font-medium font-mono mt-0.5">
+                    {currentGroup.leader.program}
+                  </p>
                 </div>
               </div>
               
@@ -250,12 +257,12 @@ export default function StudentPortal({ session }) {
               <div className="w-0.5 h-8 bg-slate-200 mt-2"></div>
             </div>
 
-            {/* TIER 2: Secondary Officer Grid Rows */}
+            {/* TIER 2: Secondary Officer Grid Rows (Darius, Jowee, Ai Mae) */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full max-w-2xl justify-items-center">
               {currentGroup.officers.map((officer, index) => (
                 <div 
                   key={index} 
-                  className="bg-white border border-slate-150 shadow-md rounded-2xl p-4 w-48 text-center space-y-3 relative transition-all hover:shadow-lg"
+                  className="bg-white border border-slate-150 shadow-md rounded-2xl p-4 w-48 text-center space-y-2 relative transition-all hover:shadow-lg"
                 >
                   {/* Stem connector point displayed over tablet layouts */}
                   <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 w-0.5 h-3 bg-slate-200 hidden sm:block"></div>
@@ -267,8 +274,11 @@ export default function StudentPortal({ session }) {
                     <h5 className="text-[11px] font-black text-slate-800 tracking-tight leading-tight">
                       {officer.name}
                     </h5>
-                    <p className="text-[9px] text-slate-400 font-medium mt-0.5">
-                      {officer.role}
+                    <p className="text-[9px] text-emerald-700 font-semibold mt-0.5">
+                      {officer.role.replace(', CSUCC USG', '')}
+                    </p>
+                    <p className="text-[9px] text-slate-400 font-medium font-mono mt-0.5">
+                      {officer.program}
                     </p>
                   </div>
                 </div>
