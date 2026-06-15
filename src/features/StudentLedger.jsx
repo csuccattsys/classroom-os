@@ -8,7 +8,8 @@ export default function StudentLedger() {
   const [selectedCollege, setSelectedCollege] = useState('ALL')
   const [searchQuery, setSearchQuery] = useState('')
 
-  const colleges = ['ALL', 'CEIT', 'CAS', 'CBEA', 'CTE']
+  // Updated array matching the exact colleges provided
+  const colleges = ['ALL', 'CBA', 'CEIT', 'CITTE', 'CTHM', 'DLHS']
 
   useEffect(() => {
     async function fetchStudents() {
