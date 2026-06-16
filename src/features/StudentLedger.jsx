@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { supabase } from '../supabaseClient'
-import { User, Shield, Search, Loader2, GraduationCap, ChevronLeft, ChevronRight, Edit2, Check, X } from 'lucide-react'
+import { User, Shield, Search, Loader2, GraduationCap, ChevronLeft, ChevronRight, Edit2, Check, X, Upload } from 'lucide-react'
+import * as XLSX from 'xlsx' // Standard spreadsheet parser dependency
 
 export default function StudentLedger({ userRole }) {
   const [students, setStudents] = useState([])
@@ -8,62 +9,133 @@ export default function StudentLedger({ userRole }) {
   const [selectedCollege, setSelectedCollege] = useState('ALL')
   const [searchQuery, setSearchQuery] = useState('')
   
-  // --- NEW STATES FOR PAGINATION & ROSTER INTERACTION ---
+  // --- PAGINATION, MUTATION, & BULK UPLOAD STATES ---
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 10
   const [editingStudentId, setEditingStudentId] = useState(null)
   const [editForm, setEditForm] = useState({ college: '', program: '', name: '' })
   const [updateProcessing, setUpdateProcessing] = useState(false)
+  const [uploading, setUploading] = useState(false)
+  const fileInputRef = useRef(null)
 
-  // Map the institutional userRoles to their corresponding database college strings
+  // Map institutional userRoles to their corresponding database college strings
   const roleToCollegeMap = {
     'cba_lsg': 'CBA',
     'ceit_lsg': 'CEIT',
     'citte_lsg': 'CITTE',
     'cthm_lsg': 'CTHM',
-    'dlhs_sgg': 'DLHS' // Matches your exact council configuration name
+    'dlhs_sgg': 'DLHS'
   }
 
-  // Determine if the current executive logging in has restricted visibility
   const assignedCollege = roleToCollegeMap[userRole]
   const isRestrictedExecutive = !!assignedCollege
-  
-  // Only allow global USG executives or administrative accounts to mutate roster records
   const canUpdateRecords = userRole === 'usg' || userRole === 'admin'
 
-  // Define the master node list
   const colleges = ['ALL', 'CBA', 'CEIT', 'CITTE', 'CTHM', 'DLHS']
 
-  useEffect(() => {
-    async function fetchStudents() {
-      try {
-        setLoading(true)
-        let query = supabase
-          .from('profiles')
-          .select('id, name, email, role, college, program')
-          .eq('role', 'student')
+  const fetchStudents = async () => {
+    try {
+      setLoading(true)
+      let query = supabase
+        .from('profiles')
+        .select('id, name, email, role, college, program')
+        .eq('role', 'student')
 
-        // SECURITY GUARD CRITERIA: Force filter if local council, otherwise follow tab selection
-        if (isRestrictedExecutive) {
-          query = query.eq('college', assignedCollege)
-        } else if (selectedCollege !== 'ALL') {
-          query = query.eq('college', selectedCollege)
-        }
-
-        const { data, error } = await query.order('name', { ascending: true })
-        if (error) throw error
-        setStudents(data || [])
-        setCurrentPage(1) // Reset view back to initial page when context changes
-      } catch (err) {
-        console.error('Ledger module scope separation error:', err.message)
-      } finally {
-        setLoading(false)
+      if (isRestrictedExecutive) {
+        query = query.eq('college', assignedCollege)
+      } else if (selectedCollege !== 'ALL') {
+        query = query.eq('college', selectedCollege)
       }
+
+      const { data, error } = await query.order('name', { ascending: true })
+      if (error) throw error
+      setStudents(data || [])
+      setCurrentPage(1)
+    } catch (err) {
+      console.error('Ledger module scope separation error:', err.message)
+    } finally {
+      setLoading(false)
     }
+  }
+
+  useEffect(() => {
     fetchStudents()
   }, [selectedCollege, userRole, isRestrictedExecutive, assignedCollege])
 
-  // --- MUTATION HANDLING INTERFACE NODES ---
+  // --- OMNI-SPREADSHEET ENGINE (READS EXCEL & CSV) ---
+  const handleSpreadsheetUpload = async (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+
+    try {
+      setUploading(true)
+      const reader = new FileReader()
+
+      reader.onload = async (event) => {
+        const data = new Uint8Array(event.target.result)
+        const workbook = XLSX.read(data, { type: 'array' })
+        
+        // Target the primary initial worksheet tab
+        const firstSheetName = workbook.SheetNames[0]
+        const worksheet = workbook.Sheets[firstSheetName]
+        
+        // Convert the structural sheet directly to a JSON data array
+        // Expects columns explicitly named: "name", "email", "college", "program"
+        const rawJsonRows = XLSX.utils.sheet_to_json(worksheet)
+
+        if (rawJsonRows.length === 0) {
+          alert("The uploaded sheet matrix contains zero readable rows.")
+          setUploading(false)
+          return
+        }
+
+        // Clean values, enforce default fallback keys, and normalize casing
+        const preparedRecords = rawJsonRows
+          .filter(row => row.email || row.Email) // Skip lines lacking institutional email address keys
+          .map(row => {
+            // Unify dynamic row header casing variations matching standard spreadsheets
+            const targetName = row.name || row.Name || row['Student Name'] || 'Anonymous User'
+            const targetEmail = row.email || row.Email || row['Institutional Email']
+            const targetCollege = row.college || row.College || row['College Node']
+            const targetProgram = row.program || row.Program || row['Program Pathway']
+
+            return {
+              name: targetName.trim(),
+              email: targetEmail.trim().toLowerCase(),
+              role: 'student',
+              college: targetCollege?.toString().toUpperCase().trim() || 'UNASSIGNED',
+              program: targetProgram?.toString().trim() || 'Not Configured'
+            }
+          })
+
+        if (preparedRecords.length === 0) {
+          alert("No valid rows matched compilation filters.")
+          setUploading(false)
+          return
+        }
+
+        // Execute optimized bulk upsert block against unique institutional email targets
+        const { error } = await supabase
+          .from('profiles')
+          .upsert(preparedRecords, { onConflict: 'email' })
+
+        if (error) throw error
+
+        alert(`Successfully synchronized ${preparedRecords.length} student matrix records!`)
+        fetchStudents() // Reload viewport metrics
+      }
+
+      reader.readAsArrayBuffer(file)
+    } catch (err) {
+      console.error('Spreadsheet processing error:', err.message)
+      alert(`Parsing fault detected: ${err.message}`)
+    } finally {
+      setUploading(false)
+      if (fileInputRef.current) fileInputRef.current.value = '' // Clear input lock
+    }
+  }
+
+  // --- INLINE ROW EDIT HANDLING ---
   const startEditing = (student) => {
     if (!canUpdateRecords) return
     setEditingStudentId(student.id)
@@ -88,11 +160,10 @@ export default function StudentLedger({ userRole }) {
 
       if (error) throw error
       
-      // Update local state on client framework safely
       setStudents(prev => prev.map(s => s.id === studentId ? { ...s, ...editForm, college: editForm.college.toUpperCase() } : s))
       setEditingStudentId(null)
     } catch (err) {
-      console.error('Failed to patch directory row profile data context:', err.message)
+      console.error('Failed to patch directory data row context:', err.message)
     } finally {
       setUpdateProcessing(false)
     }
@@ -104,7 +175,7 @@ export default function StudentLedger({ userRole }) {
     s.program?.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
-  // --- MEMORY-SLICED CLIENT PAGINATION COMPILER ---
+  // --- CLIENT SIDE PERFORMANCE MEMORY PAGINATION SPLICER ---
   const totalPages = Math.ceil(filteredStudents.length / itemsPerPage) || 1
   const indexOfLastItem = currentPage * itemsPerPage
   const indexOfFirstItem = indexOfLastItem - itemsPerPage
@@ -123,28 +194,49 @@ export default function StudentLedger({ userRole }) {
               ? `Scoped Departmental Ledger View: Restricted to ${assignedCollege}` 
               : 'Global Institutional Roster Registry (Unrestricted USG Access)'
             }
-            {canUpdateRecords && " • Inline Management Feature Active"}
           </p>
         </div>
-        <div className="relative w-full sm:w-64">
-          <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-slate-400" />
-          <input
-            type="text"
-            placeholder="Search roster..."
-            value={searchQuery}
-            onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
-            className="w-full bg-slate-50 border border-slate-200 rounded-xl py-1.5 pl-9 pr-4 text-xs font-medium text-slate-800 focus:outline-hidden focus:border-emerald-500 focus:bg-white transition-all"
-          />
+        
+        {/* INTERACTION CONTROLS BAR */}
+        <div className="flex flex-col xs:flex-row gap-2 items-stretch xs:items-center w-full sm:w-auto">
+          {canUpdateRecords && (
+            <div>
+              <input 
+                type="file" 
+                ref={fileInputRef}
+                onChange={handleSpreadsheetUpload}
+                accept=".xlsx, .xls, .csv" 
+                className="hidden" 
+              />
+              <button
+                disabled={uploading}
+                onClick={() => fileInputRef.current?.click()}
+                className="w-full flex items-center justify-center gap-1.5 bg-emerald-50 hover:bg-emerald-600 border border-emerald-200/80 hover:border-emerald-600 text-emerald-700 hover:text-white px-3 py-1.5 rounded-xl transition-all duration-150 text-xs font-bold uppercase tracking-wide cursor-pointer shadow-xs disabled:opacity-50"
+              >
+                {uploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
+                <span>{uploading ? 'Importing File...' : 'Bulk Upload Roster'}</span>
+              </button>
+            </div>
+          )}
+          <div className="relative w-full sm:w-60">
+            <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search roster..."
+              value={searchQuery}
+              onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl py-1.5 pl-9 pr-4 text-xs font-medium text-slate-800 focus:outline-hidden focus:border-emerald-500 focus:bg-white transition-all"
+            />
+          </div>
         </div>
       </div>
 
       {/* FILTER BUTTON INTERFACE LAYER */}
       <div className="flex flex-wrap gap-1.5">
         {colleges.map((c) => {
-          // If local board executive logged in, disable or hide interaction states for other colleges
           const isDisabled = isRestrictedExecutive && assignedCollege !== c
-          if (isRestrictedExecutive && c === 'ALL') return null // Do not show 'All' options to localized nodes
-          if (isDisabled) return null // Completely isolates the UI node block to only show their assigned college pill
+          if (isRestrictedExecutive && c === 'ALL') return null
+          if (isDisabled) return null
 
           return (
             <button
@@ -209,7 +301,6 @@ export default function StudentLedger({ userRole }) {
                       </td>
                       <td className="py-3 px-4 text-slate-500 font-mono text-[11px]">{student.email || 'N/A'}</td>
                       
-                      {/* COLLEGE BLOCK COLUMN COMPILER */}
                       <td className="py-3 px-4">
                         {isRowEditing ? (
                           <select
@@ -228,7 +319,6 @@ export default function StudentLedger({ userRole }) {
                         )}
                       </td>
                       
-                      {/* PROGRAM ROUTING DIRECTORY BLOCK */}
                       <td className="py-3 px-4 text-slate-600 font-semibold">
                         {isRowEditing ? (
                           <input
@@ -242,7 +332,6 @@ export default function StudentLedger({ userRole }) {
                         )}
                       </td>
 
-                      {/* ADMINISTRATIVE INLINE MUTATION CONTAINER TRRIGERS */}
                       {canUpdateRecords && (
                         <td className="py-3 px-4 text-right">
                           {isRowEditing ? (
@@ -251,14 +340,12 @@ export default function StudentLedger({ userRole }) {
                                 disabled={updateProcessing}
                                 onClick={() => handleUpdateSubmit(student.id)}
                                 className="p-1 rounded-md bg-emerald-50 hover:bg-emerald-600 text-emerald-600 hover:text-white border border-emerald-200 transition-colors cursor-pointer"
-                                title="Commit adjustments"
                               >
                                 {updateProcessing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
                               </button>
                               <button
                                 onClick={cancelEditing}
                                 className="p-1 rounded-md bg-slate-50 hover:bg-rose-500 text-slate-500 hover:text-white border border-slate-200 transition-colors cursor-pointer"
-                                title="Abort inline edits"
                               >
                                 <X className="h-3.5 w-3.5" />
                               </button>
@@ -267,7 +354,6 @@ export default function StudentLedger({ userRole }) {
                             <button
                               onClick={() => startEditing(student)}
                               className="opacity-0 group-hover:opacity-100 p-1 rounded-md bg-slate-50 hover:bg-slate-900 text-slate-500 hover:text-white border border-slate-200 transition-all cursor-pointer"
-                              title="Modify institutional metrics"
                             >
                               <Edit2 className="h-3.5 w-3.5" />
                             </button>
@@ -281,7 +367,7 @@ export default function StudentLedger({ userRole }) {
             </table>
           </div>
 
-          {/* PERFORMANCE PAGINATION CONTROL UNIT METRICS LAYOUT */}
+          {/* RENDERING PAGINATION SELECTION ACTION FOOTER BAR */}
           <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-[11px] text-slate-500 font-medium">
             <div>
               Showing <span className="font-bold text-slate-700">{indexOfFirstItem + 1}</span> to <span className="font-bold text-slate-700">{Math.min(indexOfLastItem, filteredStudents.length)}</span> of <span className="font-bold text-slate-700">{filteredStudents.length}</span> registry records
