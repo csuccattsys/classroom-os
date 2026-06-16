@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { supabase } from '../supabaseClient'
 import { User, Shield, Search, Loader2, GraduationCap, ChevronLeft, ChevronRight, Edit2, Check, X, Upload } from 'lucide-react'
-import * as XLSX from 'xlsx' // Standard spreadsheet parser dependency
 
 export default function StudentLedger({ userRole }) {
   const [students, setStudents] = useState([])
@@ -62,7 +61,7 @@ export default function StudentLedger({ userRole }) {
     fetchStudents()
   }, [selectedCollege, userRole, isRestrictedExecutive, assignedCollege])
 
-  // --- OMNI-SPREADSHEET ENGINE (READS EXCEL & CSV) ---
+  // --- NATIVE ZERO-DEPENDENCY SPREADSHEET PARSER ENGINE ---
   const handleSpreadsheetUpload = async (e) => {
     const file = e.target.files[0]
     if (!file) return
@@ -72,66 +71,72 @@ export default function StudentLedger({ userRole }) {
       const reader = new FileReader()
 
       reader.onload = async (event) => {
-        const data = new Uint8Array(event.target.result)
-        const workbook = XLSX.read(data, { type: 'array' })
+        const text = event.target.result
         
-        // Target the primary initial worksheet tab
-        const firstSheetName = workbook.SheetNames[0]
-        const worksheet = workbook.Sheets[firstSheetName]
-        
-        // Convert the structural sheet directly to a JSON data array
-        // Expects columns explicitly named: "name", "email", "college", "program"
-        const rawJsonRows = XLSX.utils.sheet_to_json(worksheet)
-
-        if (rawJsonRows.length === 0) {
-          alert("The uploaded sheet matrix contains zero readable rows.")
+        // Split data cleanly into readable rows and columns
+        const lines = text.split(/\r?\n/).filter(line => line.trim() !== '')
+        if (lines.length < 2) {
+          alert("The uploaded matrix file contains zero readable rows.")
           setUploading(false)
           return
         }
 
-        // Clean values, enforce default fallback keys, and normalize casing
-        const preparedRecords = rawJsonRows
-          .filter(row => row.email || row.Email) // Skip lines lacking institutional email address keys
-          .map(row => {
-            // Unify dynamic row header casing variations matching standard spreadsheets
-            const targetName = row.name || row.Name || row['Student Name'] || 'Anonymous User'
-            const targetEmail = row.email || row.Email || row['Institutional Email']
-            const targetCollege = row.college || row.College || row['College Node']
-            const targetProgram = row.program || row.Program || row['Program Pathway']
+        // Detect column mapping indexes dynamically based on headers
+        // Best format: Save your Excel sheet as a CSV file (.csv) before uploading!
+        const headers = lines[0].split(',').map(h => h.replace(/["']/g, "").trim().toLowerCase())
+        
+        const nameIdx = headers.findIndex(h => h.includes('name') || h.includes('student'))
+        const emailIdx = headers.findIndex(h => h.includes('email') || h.includes('mail'))
+        const collegeIdx = headers.findIndex(h => h.includes('college') || h.includes('dept'))
+        const programIdx = headers.findIndex(h => h.includes('program') || h.includes('course'))
 
-            return {
-              name: targetName.trim(),
-              email: targetEmail.trim().toLowerCase(),
-              role: 'student',
-              college: targetCollege?.toString().toUpperCase().trim() || 'UNASSIGNED',
-              program: targetProgram?.toString().trim() || 'Not Configured'
-            }
+        if (emailIdx === -1) {
+          alert("Error: The spreadsheet must contain an 'email' column header to map student profiles securely.")
+          setUploading(false)
+          return
+        }
+
+        const preparedRecords = []
+
+        for (let i = 1; i < lines.length; i++) {
+          // Robust row-splitting regex to handle text fields wrapping nested commas
+          const columns = lines[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c => c.replace(/["']/g, "").trim())
+          
+          if (!columns[emailIdx]) continue // Skip empty rows
+
+          preparedRecords.push({
+            name: nameIdx !== -1 && columns[nameIdx] ? columns[nameIdx] : 'Anonymous User',
+            email: columns[emailIdx].toLowerCase(),
+            role: 'student',
+            college: collegeIdx !== -1 && columns[collegeIdx] ? columns[collegeIdx].toUpperCase() : 'UNASSIGNED',
+            program: programIdx !== -1 && columns[programIdx] ? columns[programIdx] : 'Not Configured'
           })
+        }
 
         if (preparedRecords.length === 0) {
-          alert("No valid rows matched compilation filters.")
+          alert("No valid rows matched the compilation system parameters.")
           setUploading(false)
           return
         }
 
-        // Execute optimized bulk upsert block against unique institutional email targets
+        // Upsert directly into the Supabase 'profiles' matrix table matching unique emails
         const { error } = await supabase
           .from('profiles')
           .upsert(preparedRecords, { onConflict: 'email' })
 
         if (error) throw error
 
-        alert(`Successfully synchronized ${preparedRecords.length} student matrix records!`)
-        fetchStudents() // Reload viewport metrics
+        alert(`Successfully synchronized ${preparedRecords.length} student records into the ledger node!`)
+        fetchStudents()
       }
 
-      reader.readAsArrayBuffer(file)
+      reader.readAsText(file)
     } catch (err) {
-      console.error('Spreadsheet processing error:', err.message)
+      console.error('Spreadsheet text reader execution fault:', err.message)
       alert(`Parsing fault detected: ${err.message}`)
     } finally {
       setUploading(false)
-      if (fileInputRef.current) fileInputRef.current.value = '' // Clear input lock
+      if (fileInputRef.current) fileInputRef.current.value = ''
     }
   }
 
@@ -175,7 +180,7 @@ export default function StudentLedger({ userRole }) {
     s.program?.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
-  // --- CLIENT SIDE PERFORMANCE MEMORY PAGINATION SPLICER ---
+  // --- PAGINATION COMPILER ---
   const totalPages = Math.ceil(filteredStudents.length / itemsPerPage) || 1
   const indexOfLastItem = currentPage * itemsPerPage
   const indexOfFirstItem = indexOfLastItem - itemsPerPage
@@ -197,7 +202,7 @@ export default function StudentLedger({ userRole }) {
           </p>
         </div>
         
-        {/* INTERACTION CONTROLS BAR */}
+        {/* ACTION PANEL */}
         <div className="flex flex-col xs:flex-row gap-2 items-stretch xs:items-center w-full sm:w-auto">
           {canUpdateRecords && (
             <div>
@@ -205,7 +210,7 @@ export default function StudentLedger({ userRole }) {
                 type="file" 
                 ref={fileInputRef}
                 onChange={handleSpreadsheetUpload}
-                accept=".xlsx, .xls, .csv" 
+                accept=".csv, .txt" 
                 className="hidden" 
               />
               <button
@@ -214,7 +219,7 @@ export default function StudentLedger({ userRole }) {
                 className="w-full flex items-center justify-center gap-1.5 bg-emerald-50 hover:bg-emerald-600 border border-emerald-200/80 hover:border-emerald-600 text-emerald-700 hover:text-white px-3 py-1.5 rounded-xl transition-all duration-150 text-xs font-bold uppercase tracking-wide cursor-pointer shadow-xs disabled:opacity-50"
               >
                 {uploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
-                <span>{uploading ? 'Importing File...' : 'Bulk Upload Roster'}</span>
+                <span>{uploading ? 'Parsing Batch...' : 'Bulk Upload Roster'}</span>
               </button>
             </div>
           )}
@@ -231,7 +236,7 @@ export default function StudentLedger({ userRole }) {
         </div>
       </div>
 
-      {/* FILTER BUTTON INTERFACE LAYER */}
+      {/* FILTER PILLS */}
       <div className="flex flex-wrap gap-1.5">
         {colleges.map((c) => {
           const isDisabled = isRestrictedExecutive && assignedCollege !== c
@@ -367,7 +372,7 @@ export default function StudentLedger({ userRole }) {
             </table>
           </div>
 
-          {/* RENDERING PAGINATION SELECTION ACTION FOOTER BAR */}
+          {/* PAGINATION PANEL CONTROLS */}
           <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-[11px] text-slate-500 font-medium">
             <div>
               Showing <span className="font-bold text-slate-700">{indexOfFirstItem + 1}</span> to <span className="font-bold text-slate-700">{Math.min(indexOfLastItem, filteredStudents.length)}</span> of <span className="font-bold text-slate-700">{filteredStudents.length}</span> registry records
