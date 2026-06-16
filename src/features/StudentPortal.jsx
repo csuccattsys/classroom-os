@@ -188,7 +188,7 @@ export default function StudentPortal({ session }) {
           <div className="p-4 bg-slate-50 border-b border-slate-100 flex items-center gap-2">
             <Building2 className="h-4 w-4 text-emerald-700" />
             <span className="text-xs font-black uppercase tracking-wider text-slate-700">
-              CSUCC USG Office
+              CSUCC Governance
             </span>
           </div>
           
