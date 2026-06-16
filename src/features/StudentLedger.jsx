@@ -61,60 +61,62 @@ export default function StudentLedger({ userRole }) {
     fetchStudents()
   }, [selectedCollege, userRole, isRestrictedExecutive, assignedCollege])
 
-  // --- NATIVE ZERO-DEPENDENCY SPREADSHEET PARSER ENGINE ---
+  // --- NATIVE ZERO-DEPENDENCY SPREADSHEET PARSER ENGINE (EXCEL & CSV) ---
   const handleSpreadsheetUpload = async (e) => {
     const file = e.target.files[0]
     if (!file) return
+
+    // Safely check for global XLSX engine loaded via index.html script tag
+    const ExcelEngine = window.XLSX
+    if (!ExcelEngine) {
+      alert("Spreadsheet compilation engine is still warming up. Please try again in a moment.")
+      return
+    }
 
     try {
       setUploading(true)
       const reader = new FileReader()
 
       reader.onload = async (event) => {
-        const text = event.target.result
+        // Read raw file buffer as an unsigned 8-bit integer array to fully support Excel compressed binaries
+        const data = new Uint8Array(event.target.result)
+        const workbook = ExcelEngine.read(data, { type: 'array' })
         
-        // Split data cleanly into readable rows and columns
-        const lines = text.split(/\r?\n/).filter(line => line.trim() !== '')
-        if (lines.length < 2) {
+        // Grab the primary active worksheet tab inside the spreadsheet workbook file
+        const firstSheetName = workbook.SheetNames[0]
+        const worksheet = workbook.Sheets[firstSheetName]
+        
+        // Convert sheet grid coordinates directly into standard JSON array row keys
+        const rawJsonRows = ExcelEngine.utils.sheet_to_json(worksheet)
+
+        if (rawJsonRows.length === 0) {
           alert("The uploaded matrix file contains zero readable rows.")
           setUploading(false)
           return
         }
 
-        // Detect column mapping indexes dynamically based on headers
-        // Best format: Save your Excel sheet as a CSV file (.csv) before uploading!
-        const headers = lines[0].split(',').map(h => h.replace(/["']/g, "").trim().toLowerCase())
-        
-        const nameIdx = headers.findIndex(h => h.includes('name') || h.includes('student'))
-        const emailIdx = headers.findIndex(h => h.includes('email') || h.includes('mail'))
-        const collegeIdx = headers.findIndex(h => h.includes('college') || h.includes('dept'))
-        const programIdx = headers.findIndex(h => h.includes('program') || h.includes('course'))
+        const preparedRecords = rawJsonRows
+          .map(row => {
+            // Flexible casing fallback mapping to capture various user header formats
+            const targetName = row.name || row.Name || row['Student Name'] || 'Anonymous User'
+            const targetEmail = row.email || row.Email || row['Institutional Email']
+            const targetCollege = row.college || row.College || row['College Node']
+            const targetProgram = row.program || row.Program || row['Program Pathway']
 
-        if (emailIdx === -1) {
-          alert("Error: The spreadsheet must contain an 'email' column header to map student profiles securely.")
-          setUploading(false)
-          return
-        }
+            if (!targetEmail) return null // Ignore empty profiles or rows lacking email strings
 
-        const preparedRecords = []
-
-        for (let i = 1; i < lines.length; i++) {
-          // Robust row-splitting regex to handle text fields wrapping nested commas
-          const columns = lines[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c => c.replace(/["']/g, "").trim())
-          
-          if (!columns[emailIdx]) continue // Skip empty rows
-
-          preparedRecords.push({
-            name: nameIdx !== -1 && columns[nameIdx] ? columns[nameIdx] : 'Anonymous User',
-            email: columns[emailIdx].toLowerCase(),
-            role: 'student',
-            college: collegeIdx !== -1 && columns[collegeIdx] ? columns[collegeIdx].toUpperCase() : 'UNASSIGNED',
-            program: programIdx !== -1 && columns[programIdx] ? columns[programIdx] : 'Not Configured'
+            return {
+              name: targetName.toString().trim(),
+              email: targetEmail.toString().trim().toLowerCase(),
+              role: 'student',
+              college: targetCollege?.toString().toUpperCase().trim() || 'UNASSIGNED',
+              program: targetProgram?.toString().trim() || 'Not Configured'
+            }
           })
-        }
+          .filter(Boolean)
 
         if (preparedRecords.length === 0) {
-          alert("No valid rows matched the compilation system parameters.")
+          alert("No valid rows matched the compilation system parameters. Make sure your headers contain 'email'.")
           setUploading(false)
           return
         }
@@ -130,7 +132,8 @@ export default function StudentLedger({ userRole }) {
         fetchStudents()
       }
 
-      reader.readAsText(file)
+      // Changed from readAsText to readAsArrayBuffer to prevent binary parsing corruption for xlsx/xls
+      reader.readAsArrayBuffer(file)
     } catch (err) {
       console.error('Spreadsheet text reader execution fault:', err.message)
       alert(`Parsing fault detected: ${err.message}`)
@@ -210,7 +213,7 @@ export default function StudentLedger({ userRole }) {
                 type="file" 
                 ref={fileInputRef}
                 onChange={handleSpreadsheetUpload}
-                accept=".csv, .txt" 
+                accept=".xlsx, .xls, .csv" 
                 className="hidden" 
               />
               <button
