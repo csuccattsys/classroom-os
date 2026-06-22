@@ -36,8 +36,8 @@ export default function StudentLedger({ userRole }) {
     try {
       setLoading(true)
       let query = supabase
-        .from('profiles')
-        .select('id, name, email, role, college, program')
+        .from('students')
+        .select('id, id_number, name, role, college, program, year_level')
         .eq('role', 'student')
 
       if (isRestrictedExecutive) {
@@ -102,16 +102,17 @@ export default function StudentLedger({ userRole }) {
             const targetName = row['Name'] || row['name'] || 'Anonymous User'
             const targetCollege = row['College'] || row['college']
             const targetProgram = row['Course/Program'] || row['course/program'] || row['Course'] || row['Program']
+            const targetYearLevel = row['Year Level'] || row['year_level'] || row['Year']
 
             if (!targetId) return null // Ignore profiles or rows lacking the primary ID string
 
             return {
-              // Maps the identifier format (e.g. 2023-0022) to your unique profile key field
-              email: targetId.toString().trim().toLowerCase(), 
+              id_number: targetId.toString().trim(), 
               name: targetName.toString().trim(),
               role: 'student',
               college: targetCollege?.toString().toUpperCase().trim() || 'UNASSIGNED',
-              program: targetProgram?.toString().trim() || 'Not Configured'
+              program: targetProgram?.toString().trim() || 'Not Configured',
+              year_level: targetYearLevel?.toString().trim() || 'N/A'
             }
           })
           .filter(Boolean)
@@ -122,10 +123,10 @@ export default function StudentLedger({ userRole }) {
           return
         }
 
-        // Upsert directly into the Supabase 'profiles' matrix table matching unique values
+        // Upsert directly into the Supabase 'students' matrix table matching unique values
         const { error } = await supabase
-          .from('profiles')
-          .upsert(preparedRecords, { onConflict: 'email' })
+          .from('students')
+          .upsert(preparedRecords, { onConflict: 'id_number' })
 
         if (error) throw error
 
@@ -159,7 +160,7 @@ export default function StudentLedger({ userRole }) {
     try {
       setUpdateProcessing(true)
       const { error } = await supabase
-        .from('profiles')
+        .from('students')
         .update({ 
           college: editForm.college.toUpperCase(), 
           program: editForm.program,
@@ -180,7 +181,7 @@ export default function StudentLedger({ userRole }) {
 
   const filteredStudents = students.filter(s =>
     s.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    s.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    s.id_number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     s.program?.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
@@ -279,7 +280,7 @@ export default function StudentLedger({ userRole }) {
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-200/60 text-[9px] font-black uppercase tracking-widest text-slate-500">
                   <th className="py-3 px-4">Student Name</th>
-                  <th className="py-3 px-4">Institutional Email</th>
+                  <th className="py-3 px-4">Student ID Number</th>
                   <th className="py-3 px-4">College Node</th>
                   <th className="py-3 px-4">Program Pathway</th>
                   {canUpdateRecords && <th className="py-3 px-4 text-right">Actions</th>}
@@ -308,7 +309,7 @@ export default function StudentLedger({ userRole }) {
                           )}
                         </div>
                       </td>
-                      <td className="py-3 px-4 text-slate-500 font-mono text-[11px]">{student.email || 'N/A'}</td>
+                      <td className="py-3 px-4 text-slate-500 font-mono text-[11px]">{student.id_number || 'N/A'}</td>
                       
                       <td className="py-3 px-4">
                         {isRowEditing ? (
@@ -337,7 +338,7 @@ export default function StudentLedger({ userRole }) {
                             className="bg-white border border-slate-300 rounded px-2 py-1 text-xs font-semibold text-slate-800 focus:outline-emerald-500"
                           />
                         ) : (
-                          student.program || 'Not Configured'
+                          student.program ? (student.year_level ? `${student.program} - ${student.year_level}` : student.program) : 'Not Configured'
                         )}
                       </td>
 
