@@ -97,17 +97,18 @@ export default function StudentLedger({ userRole }) {
 
         const preparedRecords = rawJsonRows
           .map(row => {
-            // Flexible casing fallback mapping to capture various user header formats
-            const targetName = row.name || row.Name || row['Student Name'] || 'Anonymous User'
-            const targetEmail = row.email || row.Email || row['Institutional Email']
-            const targetCollege = row.college || row.College || row['College Node']
-            const targetProgram = row.program || row.Program || row['Program Pathway']
+            // Updated mappings to strictly support ID, Name, College, Course/Program, Year Level
+            const targetId = row['ID'] || row['id']
+            const targetName = row['Name'] || row['name'] || 'Anonymous User'
+            const targetCollege = row['College'] || row['college']
+            const targetProgram = row['Course/Program'] || row['course/program'] || row['Course'] || row['Program']
 
-            if (!targetEmail) return null // Ignore empty profiles or rows lacking email strings
+            if (!targetId) return null // Ignore profiles or rows lacking the primary ID string
 
             return {
+              // Maps the identifier format (e.g. 2023-0022) to your unique profile key field
+              email: targetId.toString().trim().toLowerCase(), 
               name: targetName.toString().trim(),
-              email: targetEmail.toString().trim().toLowerCase(),
               role: 'student',
               college: targetCollege?.toString().toUpperCase().trim() || 'UNASSIGNED',
               program: targetProgram?.toString().trim() || 'Not Configured'
@@ -116,12 +117,12 @@ export default function StudentLedger({ userRole }) {
           .filter(Boolean)
 
         if (preparedRecords.length === 0) {
-          alert("No valid rows matched the compilation system parameters. Make sure your headers contain 'email'.")
+          alert("No valid rows matched the compilation system parameters. Make sure your headers contain 'ID'.")
           setUploading(false)
           return
         }
 
-        // Upsert directly into the Supabase 'profiles' matrix table matching unique emails
+        // Upsert directly into the Supabase 'profiles' matrix table matching unique values
         const { error } = await supabase
           .from('profiles')
           .upsert(preparedRecords, { onConflict: 'email' })
