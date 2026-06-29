@@ -599,7 +599,7 @@ export default function StudentPortal({ session }) {
             
             <div className="grid grid-cols-1 gap-2.5 pt-0.5">
               <a 
-                href="https://beta-myschool.csucc.edu.ph" 
+                href="https://myschool.csucc.edu.ph" 
                 target="_blank" 
                 rel="noreferrer"
                 className="flex items-center justify-between p-2.5 rounded-xl border border-slate-100 bg-slate-50/50 hover:bg-emerald-50/40 hover:border-emerald-500/20 text-slate-700 hover:text-emerald-900 transition-all duration-200 group text-xs font-semibold"
