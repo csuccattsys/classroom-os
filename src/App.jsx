@@ -93,14 +93,46 @@ export default function App() {
     finally { setAppLoading(false) }
   }
 
-  const handleLoginSubmit = async (e) => {
-    e.preventDefault(); setLoginError(''); setAuthProcessing(true);
-    const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password: password.trim() })
+ const handleLoginSubmit = async (e) => {
+  e.preventDefault();
+  setLoginError('');
+  setAuthProcessing(true);
+
+  try {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: email.trim(),
+      password: password.trim()
+    });
+
     if (error) {
-      setLoginError(error.message === 'Invalid login credentials' ? 'Invalid institutional clearance email or access key.' : error.message)
-      setAuthProcessing(false)
-    } else { setAuthProcessing(false) }
+      const isNetworkError = error.message.toLowerCase().includes('failed to fetch');
+
+      // EMERGENCY LOCAL DEV FALLBACK ONLY (Do not use in production)
+      if (isNetworkError && import.meta.env.DEV) {
+        console.warn("Network offline. Running local dev fallback check.");
+        
+        // Simulating offline authentication for local dev testing
+        if (email.trim().toLowerCase() === 'davie.sialongo@csucc.edu.ph' && password === 'davie123') {
+          setUserRole('usg');
+          setIsPublicObserver(false);
+          setIsLoginModalOpen(false);
+          setAuthProcessing(false);
+          return;
+        }
+      }
+
+      setLoginError(
+        isNetworkError 
+          ? 'Network error: Server unreachable. Please check your connection.' 
+          : 'Invalid institutional clearance email or access key.'
+      );
+    }
+  } catch (err) {
+    setLoginError('Authentication gateway error.');
+  } finally {
+    setAuthProcessing(false);
   }
+};
 
   const handleLogout = async () => {
     setAppLoading(true); setIsPublicObserver(false); setUserRole('student'); setEmail(''); setPassword('');
