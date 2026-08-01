@@ -18,5 +18,17 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     params: {
       eventsPerSecond: 10
     }
+  },
+  // Global network adapter added to handle campus firewall timeouts automatically
+  global: {
+    fetch: async (url, options) => {
+      try {
+        return await fetch(url, options);
+      } catch (error) {
+        // If firewall drops the packet, retry request immediately once before throwing
+        console.warn("Campus firewall network drop detected. Attempting retry...", url);
+        return await fetch(url, options);
+      }
+    }
   }
 })
