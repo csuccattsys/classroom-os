@@ -93,67 +93,14 @@ export default function App() {
     finally { setAppLoading(false) }
   }
 
-const handleLoginSubmit = async (e) => {
-  e.preventDefault(); 
-  setLoginError(''); 
-  setAuthProcessing(true);
-
-  const trimmedEmail = email.trim().toLowerCase();
-  const trimmedPassword = password.trim();
-
-  try {
-    // 1. Attempt standard Supabase Authentication
-    const { data, error } = await supabase.auth.signInWithPassword({ 
-      email: trimmedEmail, 
-      password: trimmedPassword 
-    });
-
+  const handleLoginSubmit = async (e) => {
+    e.preventDefault(); setLoginError(''); setAuthProcessing(true);
+    const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password: password.trim() })
     if (error) {
-      // 2. Check if the error is a Network / Fetch Timeout
-      const isNetworkError = error.message.toLowerCase().includes('failed to fetch') || error.status === 0;
-
-      if (isNetworkError) {
-        console.warn("Supabase connection timed out. Activating offline local clearance check...");
-
-        // Local Emergency Fallback Check
-        if (trimmedEmail === 'davie.sialongo@csucc.edu.ph' && trimmedPassword === 'davie123') {
-          // Set active session state manually
-          setSession({ user: { id: 'offline-local-id', email: trimmedEmail } });
-          setUserRole('usg'); // Grants USG Executive access
-          setIsPublicObserver(false);
-          setIsLoginModalOpen(false);
-          
-          setActiveToast({
-            title: 'Offline Gateway Granted',
-            content: 'Connected via emergency local clearance fallback mode.',
-            publisher: 'System Security'
-          });
-          return;
-        } else {
-          setLoginError('Network unreachable and local credentials do not match.');
-        }
-      } else if (error.message === 'Invalid login credentials') {
-        setLoginError('Invalid institutional clearance email or access key.');
-      } else {
-        setLoginError(error.message);
-      }
-    }
-  } catch (err) {
-    // Catch-all for uncaught network rejections
-    if (err.message && err.message.toLowerCase().includes('failed to fetch')) {
-      if (trimmedEmail === 'davie.sialongo@csucc.edu.ph' && trimmedPassword === 'davie123') {
-        setSession({ user: { id: 'offline-local-id', email: trimmedEmail } });
-        setUserRole('usg');
-        setIsPublicObserver(false);
-        setIsLoginModalOpen(false);
-        return;
-      }
-    }
-    setLoginError('Authentication gateway unreachable.');
-  } finally {
-    setAuthProcessing(false);
+      setLoginError(error.message === 'Invalid login credentials' ? 'Invalid institutional clearance email or access key.' : error.message)
+      setAuthProcessing(false)
+    } else { setAuthProcessing(false) }
   }
-}
 
   const handleLogout = async () => {
     setAppLoading(true); setIsPublicObserver(false); setUserRole('student'); setEmail(''); setPassword('');
