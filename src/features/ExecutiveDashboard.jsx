@@ -232,7 +232,7 @@ export default function ExecutiveDashboard({
 
         <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-xs flex items-center justify-between">
           <div className="space-y-1">
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Recognized Student Orgs</p>
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">DAvie</p>
             <p className="text-xl font-black text-slate-900">{metrics.orgCount} Units</p>
           </div>
           <div className="p-2.5 rounded-xl bg-indigo-50/40 text-indigo-600"><Building2 className="h-4 w-4" /></div>
